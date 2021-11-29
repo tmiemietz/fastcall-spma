@@ -1,0 +1,12 @@
+[submodule "fastcall-benchmarks"]
+	path = fastcall-benchmarks
+	url = https://github.com/vilaureu/fastcall-benchmarks
+[submodule "linux-fastcall"]
+	path = linux-fastcall
+	url = https://github.com/vilaureu/linux
+[submodule "linux-fccmp"]
+	path = linux-fccmp
+	url = https://github.com/vilaureu/linux
+[submodule "benchmark"]
+	path = benchmark
+	url = https://github.com/google/benchmark
