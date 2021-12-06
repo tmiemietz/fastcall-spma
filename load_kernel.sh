@@ -6,8 +6,6 @@
 # list available kernel versions and set side channel mitigation options for   #
 # the next system reboot.                                                      #
 #                                                                              #
-# Copyright (c) 2021 Till Miemietz                                             #
-#                                                                              #
 ################################################################################
 
 
