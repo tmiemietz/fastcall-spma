@@ -36,6 +36,10 @@ usage () {
   echo "        Options: none"
   echo
   echo "set  -  Sets the kernel that shall be used upon next system restart."
+  echo "        If --options is given, this must be the last option since the "
+  echo "        entire following command line will be taken verbatim as a "
+  echo "        string of multiple kernel parameters that will be injected "
+  echo "        into the booting config."
   echo "        Options: --version , --options (optional)"
   echo
   echo "help -  Outputs this help and exits."
@@ -157,6 +161,17 @@ while [ $# -gt 0 ]
   do
   case "$1" in
     "--options")
+      # make sure that a kernel version has been specified *before* the
+      # kernel options
+      if [ -z "$VERSION" ]
+        then
+        echo "ERROR: Specify kernel version before options!"
+        echo
+        usage
+        exit 1
+      fi
+
+      # no empty optarg allowed
       if [ $# -lt 2 ]
         then
         echo "ERROR: --options expects list with kernel options!"
@@ -165,10 +180,11 @@ while [ $# -gt 0 ]
         exit 1
       fi
 
-      # Surround filter list with commas to prevent false-positive matching
-      # due to common pre- / postfixes
-      OPTIONS="$2"
-      shift 2;;
+      shift 1
+    
+      # take entire remaining command line as booting options
+      OPTIONS="$@"
+      break;;
     "--version")
       if [ $# -lt 2 ]
         then
@@ -181,6 +197,9 @@ while [ $# -gt 0 ]
       VERSION="$2"
       shift 2;;
     *)
+      echo "ERROR: Unknown option \"$CMD\". Aborting..."
+      echo
+
       usage
       exit 1;;
   esac
@@ -202,7 +221,7 @@ case "$CMD" in
   "help")
     usage;;
   *)
-    echo "ERROR: Unknown command $CMD. Aborting..."
+    echo "ERROR: Unknown command \"$CMD\". Aborting..."
     exit 1;;
 esac
 
