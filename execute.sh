@@ -140,6 +140,14 @@ check_kernel () {
 disable_cpu_scaling () {
   # way for doing this on SuSE
   cpupower frequency-set -g performance
+
+  # abort upon error to avoid bogus benchmark results due to active CPU
+  # scaling
+  if [ $? -ne 0 ]
+    then
+    echo "ERROR: Failed to disable CPU scaling. Aborting..."
+    exit 1
+  fi
 }
 
 #
