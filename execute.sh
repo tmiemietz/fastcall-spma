@@ -130,11 +130,28 @@ check_kernel () {
 }
 
 #
+# Set the CPU governor to performance mode to guarantee stable measurement
+# results. Depending on the OS distro, the way of doing this may differ, so
+# this is done in a separate function to preserve modularity.
+#
+# Note: The modifications done inside this function should be temporary, i.e.,
+#       they should be reset after the next reboot.
+#
+disable_cpu_scaling () {
+  # way for doing this on SuSE
+  cpupower frequency-set -g performance
+}
+
+#
 # Runs experiments. Multiple reboots and kernel switches may be required in
 # between!
 #
 do_run () {
   get_mitigation_list
+
+  # set CPU governor to performance for this boot cycle (will be reset to
+  # system default after next reboot)
+  disable_cpu_scaling
 
   for miti in $MITIS
     do
