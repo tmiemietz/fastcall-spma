@@ -13,7 +13,7 @@
 #
 
 # AMD
-MITI_AMD="mitigations=off"
+MITI_AMD="mitigations=off nopti%mds_off mitigations=auto"
 
 #
 # Other globals variables
@@ -76,7 +76,11 @@ get_mitigation_list () {
 # $2 - Benchmark to run.
 #
 check_kernel () {
+  # kernel version that is currently running
   typeset kversion=`uname -r`
+  # kernel version that should be running for benchmark
+  typeset nkernv=""
+
   typeset opts=`echo "$1" | tr "%" " "`
   # cmdline for kernel that is currently running
   typeset cmdline=`cat /proc/cmdline`
@@ -84,12 +88,12 @@ check_kernel () {
   # check if proper kernel (fastcall / fccmp) was loaded
   if [ "$2" == "fastcall" ]
     then
+    # name of kernel that should be booted 
+    nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fastcall`
+    nkernv=${nkernv##vmlinuz-}
+    
     if [[ ! $kversion == *"fastcall"* ]]
       then
-      # name of kernel that should be booted instead
-      typeset nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fastcall`
-      nkernv=${nkernv##vmlinuz-}
-
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
       echo 
@@ -97,12 +101,12 @@ check_kernel () {
       exit 2
     fi
   else
+    # name of kernel that should be booted
+    nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fccmp`
+    nkernv=${nkernv##vmlinuz-}
+    
     if [[ ! $kversion == *"fccmp"* ]]
       then
-      # name of kernel that should be booted instead
-      typeset nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fccmp`
-      nkernv=${nkernv##vmlinuz-}
-
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
       echo 
