@@ -87,28 +87,42 @@ set_kernel () {
 
   echo "Updating GRUB configuration..."
 
+  # find out path to bootloader config
+  typeset bl_cfg_path=""
+  if [ -d "/boot/grub2" ]
+    then
+    bl_cfg_path="/boot/grub2/grub.cfg"
+  elif [ -d "/boot/grub" ]
+    then
+    bl_cfg_path="/boot/grub/grub.cfg"
+  else
+    echo "ERROR: Unable to locate bootloader config script. Aborting..."
+    exit 1
+  fi
+
   # Find out id of advanced booting options menu, it's the second last field
   # of the submenu line
-  typeset -i menuline_wcnt=`cat /boot/grub2/grub.cfg | grep submenu | wc -w`
+  typeset -i menuline_wcnt=`cat $bl_cfg_path | grep submenu | head -n 1 | wc -w`
   typeset -i menuid_idx=$((menuline_wcnt - 1))
 
-  typeset menuid=`cat /boot/grub2/grub.cfg | grep "submenu" \
-                                           | cut -d' ' -f${menuid_idx} \
-                                           | tr -d "'"`
+  typeset menuid=`cat $bl_cfg_path | grep "submenu" \
+	                           | head -n 1 \
+                                   | cut -d' ' -f${menuid_idx} \
+                                   | tr -d "'"`
 
   # Find out id of specified kernel. Note the trailing ' when grepping: this
   # prevents us from running into prefixing issues (i.e., one kernel version
   # is an prefix of another, leading to ambiguous grep results). Again,
   # actual id is the second last field on the line.
-  typeset -i kernid_wcnt=`cat /boot/grub2/grub.cfg \
+  typeset -i kernid_wcnt=`cat $bl_cfg_path \
                                 | grep "with Linux $VERSION'" | wc -w`
   typeset -i kernid_idx=$((kernid_wcnt - 1))
 
   # Remove leading whitespace from menu entry by piping stuff through xargs
-  typeset kernid=`cat /boot/grub2/grub.cfg | grep "with Linux $VERSION'" \
-                                           | xargs \
-                                           | cut -d' ' -f${kernid_idx} \
-                                           | tr -d "'"`
+  typeset kernid=`cat $bl_cfg_path | grep "with Linux $VERSION'" \
+                                   | xargs \
+                                   | cut -d' ' -f${kernid_idx} \
+                                   | tr -d "'"`
 
   # update default boot entry, disable silent booting, and set kernel options 
   typeset grubconf=`cat /etc/default/grub | \
@@ -120,8 +134,8 @@ set_kernel () {
                          }
 
      # replace option string with the one passed by the user.
-     /^GRUB_CMDLINE_LINUX_DEFAULT=.*$/ { 
-            print("GRUB_CMDLINE_LINUX_DEFAULT=\"" opt "\"");
+     /^GRUB_CMDLINE_LINUX=.*$/ { 
+            print("GRUB_CMDLINE_LINUX=\"" opt "\"");
             next;
           }
 
@@ -130,7 +144,17 @@ set_kernel () {
   '`
 
   echo "$grubconf" > /etc/default/grub
-  update-bootloader
+  # update bootloader 
+  if [ -f "/usr/sbin/update-bootloader" ]
+    then
+    update-bootloader
+  elif [ -f "/usr/sbin/update-grub" ]
+    then
+    update-grub
+  else
+    echo "ERROR: No known tool for updating the booloader config. Aborting..."
+    exit 1
+  fi
 
   echo "Done."
 }

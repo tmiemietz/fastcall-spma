@@ -13,7 +13,10 @@
 #
 
 # AMD
-MITI_AMD="mitigations=off nopti%mds_off mitigations=auto"
+MITI_AMD="mitigations=off nopti%mds=off mitigations=auto"
+
+# Intel
+MITI_INTEL="mitigations=off nopti%mds=off mitigations=auto"
 
 #
 # Other globals variables
@@ -61,6 +64,8 @@ get_mitigation_list () {
   case "$VENDOR" in
     "AuthenticAMD")
       MITIS="$MITI_AMD";;
+    "GenuineIntel")
+      MITIS="$MITI_INTEL";;
     *)
       echo "Unknown CPU vendor. Please extend this script to handle this!"
       echo "Aborting..."
@@ -145,8 +150,12 @@ disable_cpu_scaling () {
   # scaling
   if [ $? -ne 0 ]
     then
-    echo "ERROR: Failed to disable CPU scaling. Aborting..."
-    exit 1
+    echo 
+    echo "##################################################################"
+    echo "WARNING: Failed to disable CPU scaling. Check benchmark output to "
+    echo "         assure that the CPU governor is set to \"performance\"!"
+    echo "##################################################################"
+    echo
   fi
 }
 
