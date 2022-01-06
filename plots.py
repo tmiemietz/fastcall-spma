@@ -49,6 +49,8 @@ FONT = {"family": "Linux Libertine, LibertinusSerif, serif",
 BAR_OFFSET = -(len(MITIGATIONS) - 1) * BAR_WIDTH / 2
 BAR_GROUP = len(MITIGATIONS) * BAR_WIDTH + BAR_SPACE
 
+EVALUATIONS = {}
+
 
 def main():
     """This iterates through all tested CPUs and generates plots."""
@@ -66,7 +68,6 @@ def process_cpu(cpu_dir):
     """This reads and plots data for a single CPU."""
     results = read_cpu(cpu_dir)
     cpu_dir = path.join(PLOTS_DIR, path.basename(cpu_dir))
-    makedirs(cpu_dir, exist_ok=True)
     plot_cpu(cpu_dir, results)
 
 
@@ -80,35 +81,6 @@ def read_cpu(cpu_dir):
         miti_dir = path.join(cpu_dir, mitigation)
         results.append(read_mitigation(miti_dir))
     return np.stack(results)
-
-
-def plot_cpu(cpu_dir, results):
-    """Plot the results for this CPU into the given directory."""
-    for i, scenario in enumerate(SCENARIOS):
-        plot_dir = path.join(cpu_dir, scenario + PLOT_EXT)
-        plot_scenario(plot_dir, scenario, results[:, :, i])
-
-
-def plot_scenario(plot_file, title, results):
-    """Create a single plot for the chosen CPU and scenario.
-
-    This is a grouped bar chart with latency against method and color codings
-    for the mitigations.
-    """
-    fig, ax = plt.subplots()
-    ax.set_title(title)
-    ax.set_ylabel(Y_LABEL)
-
-    x = np.arange(len(METHODS)) * BAR_GROUP
-    for i, mitigation in enumerate(MITIGATIONS.values()):
-        ax.bar(x + BAR_OFFSET + i * BAR_WIDTH,
-               results[i, :], BAR_WIDTH, label=mitigation)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(METHODS.values())
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(plot_file)
 
 
 def read_mitigation(miti_dir):
@@ -143,6 +115,46 @@ def find_scenario(label):
         for ident in idents:
             if ident in label:
                 return i
+
+
+def plot_cpu(cpu_dir, results):
+    """Plot the evaluations for this CPU into the given directory."""
+    for evaluation, fn in EVALUATIONS.items():
+        eval_dir = path.join(cpu_dir, evaluation)
+        plot_evaluation(eval_dir, fn, results)
+
+
+def plot_evaluation(eval_dir, function, results):
+    """Plot the results for this evaluation into the given directory."""
+    for i, scenario in enumerate(SCENARIOS):
+        makedirs(eval_dir, exist_ok=True)
+        plot_file = path.join(eval_dir, scenario.replace(" ", "_") + PLOT_EXT)
+        function(plot_file, scenario, results[:, :, i])
+
+
+def plot_latency(plot_file, title, results):
+    """Create a single plot for the chosen CPU and scenario.
+
+    This is a grouped bar chart with latency against method and color codings
+    for the mitigations.
+    """
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+    ax.set_ylabel(Y_LABEL)
+
+    x = np.arange(len(METHODS)) * BAR_GROUP
+    for i, mitigation in enumerate(MITIGATIONS.values()):
+        ax.bar(x + BAR_OFFSET + i * BAR_WIDTH,
+               results[i, :], BAR_WIDTH, label=mitigation)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(METHODS.values())
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(plot_file)
+
+
+EVALUATIONS["latency"] = plot_latency
 
 
 if __name__ == "__main__":
