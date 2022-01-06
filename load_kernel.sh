@@ -139,13 +139,19 @@ set_kernel () {
             next;
           }
 
+     # clear GRUB_CMDLINE_LINUX_DEFAULT, too
+     /^GRUB_CMDLINE_LINUX_DEFAULT=.*$/ { 
+            print("GRUB_CMDLINE_LINUX_DEFAULT=\"\"");
+            next;
+          }
+
      # default, output line without modifications
      { print($0); }
   '`
 
   echo "$grubconf" > /etc/default/grub
   # update bootloader 
-  if [ -f "/usr/sbin/update-bootloader" ]
+  if [ -f "/sbin/update-bootloader" ]
     then
     update-bootloader
   elif [ -f "/usr/sbin/update-grub" ]
