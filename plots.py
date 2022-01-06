@@ -41,7 +41,11 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
-Y_LABEL = "latency [ns]"
+Y_LABEL_LATENCY = "latency [ns]"
+Y_LABEL_THROUGHPUT_INVOCATIONS = "invocations per second"
+LATENCY_TO_SECONDS = 1e-9
+"""Factor for converting from given latency to latency in seconds."""
+
 FONT = {"family": "Linux Libertine, LibertinusSerif, serif",
         "size": 14}
 """This mimics the font used in the paper."""
@@ -133,14 +137,31 @@ def plot_evaluation(eval_dir, function, results):
 
 
 def plot_latency(plot_file, title, results):
+    """Create a single plot depicting latency."""
+    plot_scenario(plot_file, title, Y_LABEL_LATENCY, results)
+
+
+EVALUATIONS["latency"] = plot_latency
+
+
+def plot_throughput_invocations(plot_file, title, results):
+    """Create a single plot depicting invocation per time."""
+    results = 1 / (LATENCY_TO_SECONDS * results)
+    plot_scenario(plot_file, title, Y_LABEL_THROUGHPUT_INVOCATIONS, results)
+
+
+EVALUATIONS["throughput_invocations"] = plot_throughput_invocations
+
+
+def plot_scenario(plot_file, title, y_label, results):
     """Create a single plot for the chosen CPU and scenario.
 
-    This is a grouped bar chart with latency against method and color codings
-    for the mitigations.
+    This is a grouped bar chart which plots against method and uses color
+    codings for the mitigations.
     """
     fig, ax = plt.subplots()
     ax.set_title(title)
-    ax.set_ylabel(Y_LABEL)
+    ax.set_ylabel(y_label)
 
     x = np.arange(len(METHODS)) * BAR_GROUP
     for i, mitigation in enumerate(MITIGATIONS.values()):
@@ -152,9 +173,6 @@ def plot_latency(plot_file, title, results):
     ax.legend()
     fig.tight_layout()
     fig.savefig(plot_file)
-
-
-EVALUATIONS["latency"] = plot_latency
 
 
 if __name__ == "__main__":
