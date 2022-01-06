@@ -37,12 +37,14 @@ substrings in the name columns of the CSVs.
 
 SCENARIO_COLUMN = "name"
 RESULT_COLUMN = "cpu_time"
+BYTES_COLUMN = "bytes_per_second"
 BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
 Y_LABEL_LATENCY = "latency [ns]"
 Y_LABEL_THROUGHPUT_INVOCATIONS = "invocations per second"
+Y_LABEL_THROUGHPUT_BYTES = "bytes per second"
 LATENCY_TO_SECONDS = 1e-9
 """Factor for converting from given latency to latency in seconds."""
 
@@ -97,19 +99,25 @@ def read_mitigation(miti_dir):
 
 
 def read_method(method_file):
-    """Read results for this csv file into an array."""
-    array = np.zeros(len(SCENARIOS))
+    """Read results for this csv file into an array.
+
+    The array has two columns: one for latency and one for throughput (bytes).
+    """
+    array = np.zeros((len(SCENARIOS), 2))
     with open(method_file) as csv_file:
         reader = csv.reader(csv_file)
         header = next(reader)
         scen_col = header.index(SCENARIO_COLUMN)
         result_col = header.index(RESULT_COLUMN)
+        bytes_col = header.index(BYTES_COLUMN)
         for row in reader:
             label = row[scen_col]
             index = find_scenario(label)
             if index is None:
                 continue
-            array[find_scenario(label)] = float(row[result_col])
+            array[index, 0] = float(row[result_col])
+            throughput = row[bytes_col]
+            array[index, 1] = np.nan if throughput == "" else float(throughput)
     return array
 
 
@@ -138,7 +146,7 @@ def plot_evaluation(eval_dir, function, results):
 
 def plot_latency(plot_file, title, results):
     """Create a single plot depicting latency."""
-    plot_scenario(plot_file, title, Y_LABEL_LATENCY, results)
+    plot_scenario(plot_file, title, Y_LABEL_LATENCY, results[:, :, 0])
 
 
 EVALUATIONS["latency"] = plot_latency
@@ -146,11 +154,19 @@ EVALUATIONS["latency"] = plot_latency
 
 def plot_throughput_invocations(plot_file, title, results):
     """Create a single plot depicting invocation per time."""
-    results = 1 / (LATENCY_TO_SECONDS * results)
+    results = 1 / (LATENCY_TO_SECONDS * results[:, :, 0])
     plot_scenario(plot_file, title, Y_LABEL_THROUGHPUT_INVOCATIONS, results)
 
 
 EVALUATIONS["throughput_invocations"] = plot_throughput_invocations
+
+
+def plot_throughput_bytes(plot_file, title, results):
+    """Create a single plot depicting bytes per second."""
+    plot_scenario(plot_file, title, Y_LABEL_THROUGHPUT_BYTES, results[:, :, 1])
+
+
+EVALUATIONS["throughput_bytes"] = plot_throughput_bytes
 
 
 def plot_scenario(plot_file, title, y_label, results):
@@ -159,6 +175,9 @@ def plot_scenario(plot_file, title, y_label, results):
     This is a grouped bar chart which plots against method and uses color
     codings for the mitigations.
     """
+    if np.any(np.isnan(results)):
+        return
+
     fig, ax = plt.subplots()
     ax.set_title(title)
     ax.set_ylabel(y_label)
