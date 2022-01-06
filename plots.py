@@ -19,7 +19,7 @@ CSV_EXT = ".csv"
 PLOT_EXT = ".pdf"
 
 MITIGATIONS = {"mitigations=auto": "default mitigations",
-               "nopti%mds_off": "no KPTI/MDS", "mitigations=off": "no mitigations"}
+               "nopti%mds=off": "no KPTI/MDS", "mitigations=off": "no mitigations"}
 """
 Mapping from directory names of different mitigation settings to plot legends.
 """
