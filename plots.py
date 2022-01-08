@@ -62,7 +62,7 @@ Y_LABEL_THROUGHPUT_BYTES = "bytes per second"
 LATENCY_TO_SECONDS = 1e-9
 """Factor for converting from given latency to latency in seconds."""
 
-FONT = {"family": "Linux Libertine, LibertinusSerif, serif",
+FONT = {"family": ["Linux Libertine", "Libertinus Serif", "serif"],
         "size": 14}
 """This mimics the font used in the paper."""
 
