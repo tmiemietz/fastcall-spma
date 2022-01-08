@@ -28,6 +28,20 @@ METHODS = {"vdso": "vDSO", "fastcall": "fastcall",
            "syscall": "syscall", "ioctl": "ioctl"}
 """Mapping from file names of the tested methods to plot labels."""
 
+ARROW_ENABLE = True
+"""Draw an arrow indicating relative improvement."""
+
+ARROW_METHODS = ("fastcall", "syscall")
+"""Draw an arrow between these methods to show an improvement factor."""
+
+ARROW_IDS = tuple(list(METHODS.keys()).index(m) for m in ARROW_METHODS)
+
+ARROW_MITIGATION = list(MITIGATIONS.keys()).index("mitigations=auto")
+"""Draw the improvement arrow for this mitigation."""
+
+ARROW_TEXT_OFF = -0.2
+ARROW_COLOR = "0.4"
+
 SCENARIOS = {"Empty Function": {"fastcall_examples_noop", "ioctl_noop",
                                 "syscall_sys_ni_syscall", "vdso_noop"}, "64-Byte Copy": {"array/64"}}
 """
@@ -189,9 +203,41 @@ def plot_scenario(plot_file, title, y_label, results):
 
     ax.set_xticks(x)
     ax.set_xticklabels(METHODS.values())
+
+    if ARROW_ENABLE:
+        draw_arrow(ax, x, results)
+
     ax.legend()
     fig.tight_layout()
     fig.savefig(plot_file)
+
+
+def draw_arrow(ax, x, results):
+    """Draw an arrow between two methods indicating relative improvement."""
+    arrow_ids = list(ARROW_IDS)
+    arrow_ys = list(results[ARROW_MITIGATION, arrow_id]
+                    for arrow_id in arrow_ids)
+    arrow_text_off = ARROW_TEXT_OFF
+    horizontalalignment = "right"
+    if arrow_ys[0] > arrow_ys[1]:
+        arrow_ys.reverse()
+        arrow_ids.reverse()
+        horizontalalignment = "left"
+        arrow_text_off *= -1
+
+    arrow_x = x[arrow_ids[0]] + BAR_OFFSET + ARROW_MITIGATION * BAR_WIDTH
+    arrow_coords = np.stack(list(np.array((arrow_x, arrow_y))
+                            for arrow_y in arrow_ys))
+    ax.annotate("", *arrow_coords,
+                arrowprops=dict(arrowstyle="|-|", color=ARROW_COLOR))
+
+    text_coords = np.average(arrow_coords, axis=0)
+    text_coords[0] += arrow_text_off
+    percent = int((arrow_ys[1] / arrow_ys[0] - 1) * 100)
+    text = f"+{percent}%"
+    bbox = dict(boxstyle="round", color="w", ec="0.7", alpha=0.7)
+    ax.annotate(text, text_coords, color=ARROW_COLOR,
+                bbox=bbox)
 
 
 if __name__ == "__main__":
