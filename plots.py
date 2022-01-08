@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 RESULTS_DIR = "./results/"
 PLOTS_DIR = "./plots/"
 CSV_EXT = ".csv"
-PLOT_EXT = ".pdf"
+PLOT_EXT = ".png"
 
 MITIGATIONS = {"mitigations=auto": "default mitigations",
                "nopti%mds=off": "no KPTI/MDS", "mitigations=off": "no mitigations"}
