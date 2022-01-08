@@ -66,6 +66,7 @@ FONT = {"family": ["Linux Libertine", "Libertinus Serif", "serif"],
         "size": 14}
 """This mimics the font used in the paper."""
 
+COLORS = ("1b9e77", "d95f02", "7570b3")
 BAR_OFFSET = -(len(MITIGATIONS) - 1) * BAR_WIDTH / 2
 BAR_GROUP = len(MITIGATIONS) * BAR_WIDTH + BAR_SPACE
 
@@ -193,13 +194,14 @@ def plot_scenario(plot_file, title, y_label, results):
         return
 
     fig, ax = plt.subplots()
+    ax.set_prop_cycle(color=COLORS)
     ax.set_title(title)
     ax.set_ylabel(y_label)
 
     x = np.arange(len(METHODS)) * BAR_GROUP
     for i, mitigation in enumerate(MITIGATIONS.values()):
-        ax.bar(x + BAR_OFFSET + i * BAR_WIDTH,
-               results[i, :], BAR_WIDTH, label=mitigation)
+        ax.bar(x + BAR_OFFSET + i * BAR_WIDTH, results[i, :], BAR_WIDTH,
+               label=mitigation)
 
     ax.set_xticks(x)
     ax.set_xticklabels(METHODS.values())
