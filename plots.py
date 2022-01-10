@@ -28,6 +28,9 @@ METHODS = {"vdso": "vDSO", "fastcall": "fastcall",
            "syscall": "syscall", "ioctl": "ioctl"}
 """Mapping from file names of the tested methods to plot labels."""
 
+GRID_ENABLE = True
+"""Show horizontal grid lines."""
+
 ARROW_ENABLE = True
 """Draw an arrow indicating relative improvement."""
 
@@ -209,6 +212,8 @@ def plot_scenario(plot_file, title, y_label, results):
     if ARROW_ENABLE:
         draw_arrow(ax, x, results)
 
+    ax.set_axisbelow(True)
+    ax.yaxis.grid(GRID_ENABLE)
     ax.legend()
     fig.tight_layout()
     fig.savefig(plot_file)
