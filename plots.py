@@ -31,6 +31,9 @@ METHODS = {"vdso": "vDSO", "fastcall": "fastcall",
 GRID_ENABLE = True
 """Show horizontal grid lines."""
 
+BAR_LABELS = False
+"""Add labels to the bars showing the y value."""
+
 ARROW_ENABLE = True
 """Draw an arrow indicating relative improvement."""
 
@@ -202,15 +205,17 @@ def plot_scenario(plot_file, title, y_label, results):
 
     x = np.arange(len(METHODS)) * BAR_GROUP
     for i, mitigation in enumerate(MITIGATIONS.values()):
-        ax.bar(x + BAR_OFFSET + i * BAR_WIDTH, results[i, :], BAR_WIDTH,
-               label=mitigation)
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(METHODS.values())
+        xs = x + BAR_OFFSET + i * BAR_WIDTH
+        ys = results[i]
+        bar = ax.bar(xs, ys, BAR_WIDTH, label=mitigation)
+        if BAR_LABELS:
+            bar = ax.bar_label(bar, fmt="%.2e", rotation="vertical", padding=4)
 
     if ARROW_ENABLE:
         draw_arrow(ax, x, results)
 
+    ax.set_xticks(x)
+    ax.set_xticklabels(METHODS.values())
     ax.set_axisbelow(True)
     ax.yaxis.grid(GRID_ENABLE)
     ax.legend()
