@@ -42,7 +42,6 @@ ARROW_IDS = tuple(list(METHODS.keys()).index(m) for m in ARROW_METHODS)
 ARROW_MITIGATION = list(MITIGATIONS.keys()).index("mitigations=auto")
 """Draw the improvement arrow for this mitigation."""
 
-ARROW_TEXT_OFF = -0.2
 ARROW_COLOR = "0.4"
 
 SCENARIOS = {"Empty Function": {"fastcall_examples_noop", "ioctl_noop",
@@ -224,13 +223,11 @@ def draw_arrow(ax, x, results):
     arrow_ids = list(ARROW_IDS)
     arrow_ys = list(results[ARROW_MITIGATION, arrow_id]
                     for arrow_id in arrow_ids)
-    arrow_text_off = ARROW_TEXT_OFF
     horizontalalignment = "right"
     if arrow_ys[0] > arrow_ys[1]:
         arrow_ys.reverse()
         arrow_ids.reverse()
         horizontalalignment = "left"
-        arrow_text_off *= -1
 
     arrow_x = x[arrow_ids[0]] + BAR_OFFSET + ARROW_MITIGATION * BAR_WIDTH
     arrow_coords = np.stack(list(np.array((arrow_x, arrow_y))
@@ -238,12 +235,11 @@ def draw_arrow(ax, x, results):
     ax.annotate("", *arrow_coords,
                 arrowprops=dict(arrowstyle="|-|", color=ARROW_COLOR))
 
-    text_coords = np.average(arrow_coords, axis=0)
-    text_coords[0] += arrow_text_off
-    percent = int((arrow_ys[1] / arrow_ys[0] - 1) * 100)
+    center_coords = np.average(arrow_coords, axis=0)
+    percent = round((arrow_ys[1] / arrow_ys[0] - 1) * 100)
     text = f"+{percent}%"
     bbox = dict(boxstyle="round", color="w", ec="0.7", alpha=0.7)
-    ax.annotate(text, text_coords, color=ARROW_COLOR,
+    ax.annotate(text, center_coords, color=ARROW_COLOR,
                 bbox=bbox)
 
 
