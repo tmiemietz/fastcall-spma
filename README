@@ -1,0 +1,86 @@
+################################################################################
+#                                                                              #
+#                               fastcall-atc                                   #
+#                                    -                                         #
+#  A collection of helper scripts for reproducing fastcall benchmark results.  #
+#                                                                              #
+################################################################################
+
+This repository contains several scripts that reproduce the results of the
+fastcall benchmarks and plot the numbers as shown in publications.
+
+
+Locations
+=========
+
+Beside the directories containing git submodules and the scripts for performing
+the benchmarks, the repository contains a directory called 'results' for 
+storing the plain (CSV) output of the benchmarks and a directory called 'plots'
+for saving the final graphical output.
+
+
+Files included
+==============
+
+install.sh     - Compiles and installs the components necessary for executing
+                 the benchmarks.
+
+load_kernel.sh - Configures a new kernel for use after next power cycle.
+
+execute.sh     - Performs the benchmarks.
+
+plots.py       - Plots the results.
+
+
+Setup
+=====
+
+Make sure that you have installed all necessary packages for building Google's
+benchmarks library and the Linux kernel. You will also need Python 3 to run
+the plotting script.
+
+After cloning the repository, set up its submodules by executing
+
+git submodule update --init --recursive
+
+then, run 
+
+./install 
+
+from the root of this repository. Note that errors during the compilation
+process of any component (e.g. due to missing packages) may require you to
+execute the commands listed in 'install.sh' manually.
+
+
+Running the Benchmarks
+======================
+
+In order to run the benchmarks for your machine, execute
+
+./execute.sh run
+
+from the command line. This will guide you through the benchmarks. Note that
+in  order to complete all experiments, you will have to load different kernels
+and thus reboot the machine multiple times. Follow the instructions printed
+by the 'execute.sh' script. It will provide you with the correct command line
+that you should enter in order to load the appropriate kernel for continuing
+with the experiments. After rebooting the machine, continue with the command 
+above. Repeat these steps, until 'execute.sh' exits with a success message.
+
+Note that 'execute.sh' will only conduct the experiments for the CPU type
+present on the local machine. In order to obtain the all numbers, you may have
+to run the same procedure on different machines.
+
+By default, 'execute.sh' will skip benchmark runs for which results are 
+already present in the 'results' directory. If you wish to reset the numbers
+collected for your local CPU type, run
+
+./execute.sh reset
+
+
+Plotting
+========
+
+In order to generate plots from the data available in 'results', run
+
+./plots.py
