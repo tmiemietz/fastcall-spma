@@ -1,0 +1,12 @@
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"VDSOFixture<VDSO_NOOP>/vdso_noop",462796739,1.50768,1.50805,ns,,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/0",275746402,2.53317,2.53392,ns,0,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/8",211525674,3.3163,3.31711,ns,2.41174e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/16",161199890,4.30931,4.31041,ns,3.71195e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/24",131843102,5.31175,5.31289,ns,4.51731e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/32",111792490,6.27889,6.28037,ns,5.09524e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/40",95050066,7.38021,7.38182,ns,5.41872e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/48",83362391,8.37628,8.37777,ns,5.72945e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/56",74729697,9.37776,9.37961,ns,5.97039e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/64",67492726,10.3851,10.3868,ns,6.16168e+09,,,,
+"VDSOFixture<VDSO_COPY_NT>/vdso_copy_nt",6493340,105.791,105.81,ns,6.04856e+08,,,,
