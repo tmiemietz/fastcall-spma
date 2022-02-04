@@ -25,7 +25,7 @@ MITI_INTEL="mitigations=off nopti%mds=off mitigations=auto"
 # list of mitigation options to iterate over, set automatically
 MITIS=""
 
-# list of benchmarks to run
+# list of microbenchmarks to run
 BENCHS="fastcall syscall ioctl vdso"
 
 ################################################################################
@@ -160,10 +160,10 @@ disable_cpu_scaling () {
 }
 
 #
-# Runs experiments. Multiple reboots and kernel switches may be required in
-# between!
+# Runs microbenchmark experiments. Multiple reboots and kernel switches may be
+# required in between!
 #
-do_run () {
+do_run_micro () {
   get_mitigation_list
 
   # set CPU governor to performance for this boot cycle (will be reset to
@@ -204,6 +204,98 @@ do_run () {
       # benchmark successful, store plain csv
       echo "$csv" > ${SPATH}/results/${CPUID}/${miti}/${bench}.csv
 
+      echo "Done."
+    done
+  done
+}
+
+#
+# Runs "miscellaneous" experiments. Multiple reboots and kernel switches may be
+# required in between!
+#
+do_run_misc () {
+  # list of misc benchmarks to run for a certain kernel type
+  typeset misc_benchs=""
+
+  get_mitigation_list
+
+  # set CPU governor to performance for this boot cycle (will be reset to
+  # system default after next reboot)
+  disable_cpu_scaling
+
+  for miti in $MITIS
+    do
+    # create results directory
+    mkdir -p ${SPATH}/results/${CPUID}/${miti}
+    
+    # do misc benchmarks for both the fastcall and the fccmp kernel
+    for ktype in "fastcall" "fccmp"
+      do
+      echo "Running misc benchmarks for kernel config ${ktype}/${miti}..."
+      
+      # check if benchmark was already conducted
+      if [ -f ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv ]
+        then
+        echo "Benchmark results already present. Skipping..."
+        continue
+      fi
+
+      # set list of misc benchmarks to run for this kernel type
+      if [ "$ktype" == "fastcall" ]
+        then
+        misc_benchs="noop 
+                     registration-minimal registration-mappings 
+                     deregistration-minimal deregistration-mappings
+                     fork-simple fork-fastcall
+                     vfork-simple vfork-fastcall"
+      else
+        # leave some benchmarks out as they can only be performed with a 
+        # fastcall-enabled kernel.
+        misc_benchs="noop
+                     fork-simple vfork-simple"
+      fi
+
+      for bench in $misc_benchs
+        do
+        echo "Running misc benchmark case ${bench}..."
+
+        # check if kernel config fits the next benchmark, here: use ktype to
+        # load appropriate kernel version (fastcall requires fastcall kernel,
+        # everything else will be mapped to fccmp).
+        check_kernel "$miti" "$ktype"
+
+        csv=`${SPATH}/fastcall-benchmarks/build/misc/fastcall-misc \
+             ${bench} \
+             2>${SPATH}/results/${CPUID}/${miti}/misc-${ktype}-${bench}.out`
+
+        if [ $? -ne 0 ]
+          then
+          echo "Benchmark $bench failed. See output below: "
+          echo 
+          cat ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}-${bench}.out
+          continue
+        fi
+
+        # if result file does not exist, create it, otherwise do merging
+        if [ ! -f ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv ]
+          then
+          printf "${bench}\n${csv}" \
+                  > ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv
+        else
+          # write results to temporary file, merge result files later on
+          printf "${bench}\n${csv}" > ${SPATH}/results/${CPUID}/${miti}/misc.p
+
+          # merge files
+          paste -d "," ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv \
+                       ${SPATH}/results/${CPUID}/${miti}/misc.p \
+                       > ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv.tmp
+
+          # remove tempfiles
+          mv ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv.tmp \
+             ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv
+          rm ${SPATH}/results/${CPUID}/${miti}/misc.p
+        fi
+      done
       echo "Done."
     done
   done
@@ -254,11 +346,17 @@ shift 1
 
 # Branch depending on command
 case "$CMD" in
-  "run")
-    do_run
+  "run-micro")
+    do_run_micro
 
     echo
-    echo "Benchmarks finished for local CPU type $CPUID."
+    echo "Microbenchmarks finished for local CPU type $CPUID."
+    echo;;
+  "run-misc")
+    do_run_misc
+
+    echo
+    echo "Miscellaneous benchmarks finished for local CPU type $CPUID."
     echo;;
   "reset")
     do_reset;;
