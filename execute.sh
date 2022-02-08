@@ -44,14 +44,21 @@ usage () {
   echo "List of Accepted Commands:"
   echo "=========================="
   echo
-  echo "run   - Runs benchmarks for the CPU type of this machine. May require "
-  echo "        multiple reboots with different kernels to complete. Watch the"
-  echo "        output of the script for instructions."
+  echo "run-micro - Runs microbenchmarks for the CPU type of this machine. May"
+  echo "            require multiple reboots with different kernels to"
+  echo "            complete. Watch the output of the script for instructions."
+  echo "            Options: none"
   echo
-  echo "reset - Clears benchmark results for the CPU type of this machine."
+  echo "run-misc  - Runs the misc benchmarks for the CPU type of this machine."
+  echo "            May require multiple reboots with different kernels to"
+  echo "            complete. Watch the output of the script for instructions."
+  echo "            Options: none"
   echo
-  echo "help  - Outputs this help and exits."
-  echo "        Options: none"
+  echo "reset     - Clears benchmark results for the CPU type of this machine."
+  echo "            Options: none"
+  echo 
+  echo "help      - Outputs this help and exits."
+  echo "            Options: none"
   echo 
   echo "Options:"
   echo "=========================="
@@ -138,12 +145,35 @@ check_kernel () {
 # Set the CPU governor to performance mode to guarantee stable measurement
 # results. Depending on the OS distro, the way of doing this may differ, so
 # this is done in a separate function to preserve modularity.
+# This function furthermore tries to disable turbo mode and hyperthreading.
 #
 # Note: The modifications done inside this function should be temporary, i.e.,
 #       they should be reset after the next reboot.
 #
 disable_cpu_scaling () {
-  # way for doing this on SuSE
+  # switch off turbo mode and hyperthreading; depends on vendor type
+  case "$VENDOR" in
+    "AuthenticAMD")
+      # disable turbo mode
+      echo 0 > /sys/devices/system/cpu/cpufreq/boost
+
+      # turn off SMT 
+      echo "off" > /sys/devices/system/cpu/smt/control;;
+    "GenuineIntel")
+      # disable turbo mode
+      echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
+
+      # turn off SMT 
+      echo "off" > /sys/devices/system/cpu/smt/control;;
+    *)
+      echo "Unknown CPU vendor. Please extend this script to handle this!"
+      echo "Aborting..."
+      exit 1;;
+  esac
+  
+  # lastly, set CPU governor for remaining cores
+
+  # way for doing this on SuSE / Debian
   cpupower frequency-set -g performance
 
   # abort upon error to avoid bogus benchmark results due to active CPU
