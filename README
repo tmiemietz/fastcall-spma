@@ -83,4 +83,4 @@ Plotting
 
 In order to generate plots from the data available in 'results', run
 
-./plots.py
+python3 -m plotting
