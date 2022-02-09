@@ -149,7 +149,7 @@ def plot_misc(results: Results):
     """Plot fork benchmarks for all CPUs."""
 
     for i, cpu in enumerate(results.cpus):
-        cpu_dir = path.join(RESULTS_DIR, cpu)
+        cpu_dir = path.join(PLOTS_DIR, cpu)
         plot_cpu(cpu_dir, results.array[i])
 
 

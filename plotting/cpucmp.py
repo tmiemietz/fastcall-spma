@@ -78,5 +78,5 @@ def plot_scenario(title, results):
     ax.legend()
     fig.tight_layout()
 
-    plot_file = path.join(RESULTS_DIR, PREFIX + title + PLOT_EXT)
+    plot_file = path.join(PLOTS_DIR, PREFIX + title + PLOT_EXT)
     fig.savefig(plot_file)
