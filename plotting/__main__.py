@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-from . import percpu, cpucmp
+from . import percpu, cpucmp, fork
 from .utils import *
 
 
@@ -10,6 +10,8 @@ def main():
     results = read_benchmarks()
     percpu.plot(results)
     cpucmp.plot(results)
+
+    fork.process()
 
 
 if __name__ == "__main__":

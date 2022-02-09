@@ -9,7 +9,7 @@ PLOT_CPUS = {"Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz": "i7-4790",
              "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz": "Xeon 8375C"}
 """List of CPUs to compare."""
 
-PLOT_MITI = ["mitigations=auto", "mitigations=off"]
+PLOT_MITI = ("mitigations=auto", "mitigations=off")
 """List of mitigations to show."""
 
 NORM_METHOD = "fastcall"
@@ -69,7 +69,7 @@ def plot_scenario(title, results):
     x = np.arange(len(METHODS)) * BAR_GROUP
     for i, (ys, label) in enumerate(zip(bars, labels)):
         xs = x + BAR_OFFSET + i * BAR_WIDTH
-        bar = ax.bar(xs, ys, BAR_WIDTH, label=label)
+        ax.bar(xs, ys, BAR_WIDTH, label=label)
 
     ax.set_xticks(x)
     ax.set_xticklabels(METHODS.values())

@@ -105,7 +105,7 @@ def plot_scenario(plot_file, title, y_label, results):
         ys = results[i]
         bar = ax.bar(xs, ys, BAR_WIDTH, label=mitigation)
         if BAR_LABELS:
-            bar = ax.bar_label(bar, fmt="%.2e", rotation="vertical", padding=4)
+            ax.bar_label(bar, fmt="%.2e", rotation="vertical", padding=4)
 
     if ARROW_ENABLE:
         draw_arrow(ax, x, results)
