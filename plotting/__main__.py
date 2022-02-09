@@ -1,5 +1,5 @@
 from matplotlib import pyplot as plt
-from . import percpu
+from . import percpu, cpucmp
 from .utils import *
 
 
@@ -9,6 +9,7 @@ def main():
 
     results = read_benchmarks()
     percpu.plot(results)
+    cpucmp.plot(results)
 
 
 if __name__ == "__main__":

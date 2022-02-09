@@ -32,7 +32,6 @@ Y_LABEL_LATENCY = "latency [ns]"
 Y_LABEL_THROUGHPUT_INVOCATIONS = "invocations per second"
 Y_LABEL_THROUGHPUT_BYTES = "bytes per second"
 
-COLORS = ("1b9e77", "d95f02", "7570b3")
 BAR_OFFSET = -(len(MITIGATIONS) - 1) * BAR_WIDTH / 2
 BAR_GROUP = len(MITIGATIONS) * BAR_WIDTH + BAR_SPACE
 

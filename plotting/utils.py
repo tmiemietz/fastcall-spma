@@ -30,6 +30,7 @@ BYTES_COLUMN = "bytes_per_second"
 LATENCY_TO_SECONDS = 1e-9
 """Factor for converting from given latency to latency in seconds."""
 
+COLORS = ("1b9e77", "d95f02", "7570b3", "e7298a")
 FONT = {"family": ["Linux Libertine", "Libertinus Serif", "serif"],
         "size": 14}
 """This mimics the font used in the paper."""
@@ -44,7 +45,7 @@ class Results:
 def read_benchmarks():
     """Read benchmark results into a Results object.
 
-    The shape of the array is (CPU, MITIGATIONS, METHODS, SCENARIOS).
+    The shape of the array is (CPU, MITIGATIONS, METHODS, SCENARIOS, L/T).
     The CPU names are stored in cpus.
     """
     results = []
@@ -63,7 +64,7 @@ def read_benchmarks():
 def read_cpu(cpu_dir):
     """Read results for the CPU into an array.
 
-    The shape of the array is (MITIGATIONS, METHODS, SCENARIOS).
+    The shape of the array is (MITIGATIONS, METHODS, SCENARIOS, L/T).
     """
     results = []
     for mitigation in MITIGATIONS:
