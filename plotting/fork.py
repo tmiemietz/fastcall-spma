@@ -32,17 +32,16 @@ removed when fixed.
 """
 
 STACK = (
-    ("fastcall", "fork-fastcall", "w/ registrations"),
-    ("fastcall", "fork-simple", "w/o registrations"),
-    ("stock", "fork-simple", "stock kernel"),
+    ("fastcall", "fork-fastcall", "W/ Registrations"),
+    ("fastcall", "fork-simple", "W/O Registrations"),
+    ("stock", "fork-simple", "Stock Kernel"),
 )
 """
 (kernel, measure, label) tuples describing the sections of the stacked bar plot.
 """
 
-PLOT_NAME = "fork"
-TITLE = "Fork Latencies"
-Y_LABEL = "latency [µs]"
+PLOT_NAME = "Fork"
+Y_LABEL = "Latency [µs]"
 SCALING = 10 ** -3
 BAR_WIDTH = 0.3
 
@@ -178,4 +177,4 @@ def plot_cpu(cpu_dir, results):
     fig.tight_layout()
 
     plot_file = path.join(cpu_dir, PLOT_NAME + PLOT_EXT)
-    fig.savefig(plot_file)
+    fig.savefig(plot_file, bbox_inches="tight")

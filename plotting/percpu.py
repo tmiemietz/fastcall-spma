@@ -28,9 +28,9 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
-Y_LABEL_LATENCY = "latency [ns]"
-Y_LABEL_THROUGHPUT_INVOCATIONS = "invocations per second"
-Y_LABEL_THROUGHPUT_BYTES = "bytes per second"
+Y_LABEL_LATENCY = "Latency [ns]"
+Y_LABEL_THROUGHPUT_INVOCATIONS = "Invocations per Second"
+Y_LABEL_THROUGHPUT_BYTES = "Bytes per Second"
 
 BAR_OFFSET = -(len(MITIGATIONS) - 1) * BAR_WIDTH / 2
 BAR_GROUP = len(MITIGATIONS) * BAR_WIDTH + BAR_SPACE
@@ -57,35 +57,35 @@ def plot_evaluation(eval_dir, function, results):
     for i, scenario in enumerate(SCENARIOS):
         makedirs(eval_dir, exist_ok=True)
         plot_file = path.join(eval_dir, scenario.replace(" ", "_") + PLOT_EXT)
-        function(plot_file, scenario, results[:, :, i])
+        function(plot_file, results[:, :, i])
 
 
-def plot_latency(plot_file, title, results):
+def plot_latency(plot_file, results):
     """Create a single plot depicting latency."""
-    plot_scenario(plot_file, title, Y_LABEL_LATENCY, results[:, :, 0])
+    plot_scenario(plot_file, Y_LABEL_LATENCY, results[:, :, 0])
 
 
 EVALUATIONS["latency"] = plot_latency
 
 
-def plot_throughput_invocations(plot_file, title, results):
+def plot_throughput_invocations(plot_file, results):
     """Create a single plot depicting invocation per time."""
     results = 1 / (LATENCY_TO_SECONDS * results[:, :, 0])
-    plot_scenario(plot_file, title, Y_LABEL_THROUGHPUT_INVOCATIONS, results)
+    plot_scenario(plot_file, Y_LABEL_THROUGHPUT_INVOCATIONS, results)
 
 
 EVALUATIONS["throughput_invocations"] = plot_throughput_invocations
 
 
-def plot_throughput_bytes(plot_file, title, results):
+def plot_throughput_bytes(plot_file, results):
     """Create a single plot depicting bytes per second."""
-    plot_scenario(plot_file, title, Y_LABEL_THROUGHPUT_BYTES, results[:, :, 1])
+    plot_scenario(plot_file, Y_LABEL_THROUGHPUT_BYTES, results[:, :, 1])
 
 
 EVALUATIONS["throughput_bytes"] = plot_throughput_bytes
 
 
-def plot_scenario(plot_file, title, y_label, results):
+def plot_scenario(plot_file, y_label, results):
     """Create a single plot for the chosen CPU and scenario.
 
     This is a grouped bar chart which plots against method and uses color
@@ -96,7 +96,6 @@ def plot_scenario(plot_file, title, y_label, results):
 
     fig, ax = plt.subplots()
     ax.set_prop_cycle(color=COLORS)
-    ax.set_title(title)
     ax.set_ylabel(y_label)
 
     x = np.arange(len(METHODS)) * BAR_GROUP
@@ -114,9 +113,10 @@ def plot_scenario(plot_file, title, y_label, results):
     ax.set_xticklabels(METHODS.values())
     ax.set_axisbelow(True)
     ax.yaxis.grid(GRID_ENABLE)
-    ax.legend()
+    ax.legend(ncol=len(MITIGATIONS), loc="lower center",
+              bbox_to_anchor=(0.5, 1.05))
     fig.tight_layout()
-    fig.savefig(plot_file)
+    fig.savefig(plot_file, bbox_inches="tight")
 
 
 def draw_arrow(ax, x, results):

@@ -22,7 +22,7 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
-Y_LABEL = "latency [ns]"
+Y_LABEL = "Latency [ns]"
 LABELS = len(PLOT_CPUS) * len(PLOT_MITI)
 BAR_OFFSET = -(LABELS - 1) * BAR_WIDTH / 2
 BAR_GROUP = LABELS * BAR_WIDTH + BAR_SPACE

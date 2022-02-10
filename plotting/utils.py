@@ -7,8 +7,8 @@ PLOTS_DIR = "./plots/"
 CSV_EXT = ".csv"
 PLOT_EXT = ".png"
 
-MITIGATIONS = {"mitigations=auto": "default mitigations",
-               "nopti%mds=off": "no KPTI/MDS", "mitigations=off": "no mitigations"}
+MITIGATIONS = {"mitigations=auto": "Default Mitigations",
+               "nopti%mds=off": "No KPTI/MDS", "mitigations=off": "No Mitigations"}
 """
 Mapping from directory names of different mitigation settings to plot legends.
 """
