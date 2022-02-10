@@ -24,13 +24,6 @@ AVERAGE = np.median
 GRID_ENABLE = True
 """Show horizontal grid lines."""
 
-SAMPLES = 10000
-"""Number of samples to read from the data files.
-
-This is only needed because of a bug in the benchmark program and should be
-removed when fixed.
-"""
-
 STACK = (
     ("fastcall", "fork-fastcall", "W/ Registrations"),
     ("fastcall", "fork-simple", "W/O Registrations"),
@@ -128,10 +121,7 @@ def read_kernel(data_file):
                 i = -1
             col_map.append(i)
 
-        for r, row in enumerate(reader):
-            if r >= SAMPLES:
-                break
-
+        for row in reader:
             array = np.full(len(MEASURES), np.nan)
             for i, col in enumerate(row):
                 if col_map[i] < 0:
