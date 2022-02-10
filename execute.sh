@@ -1,4 +1,4 @@
-#! /bin/bash -e
+#! /bin/bash 
 
 ################################################################################
 #                                                                              #
@@ -17,6 +17,9 @@ MITI_AMD="mitigations=off nopti%mds=off mitigations=auto"
 
 # Intel
 MITI_INTEL="mitigations=off nopti%mds=off mitigations=auto"
+
+# ARM (we don't support mitigated kernels yet)
+MITI_ARM="mitigations=off"
 
 #
 # Other globals variables
@@ -68,16 +71,34 @@ usage () {
 # Selects the list of suitable mitigations accoring to CPU manufacturer.
 #
 get_mitigation_list () {
-  case "$VENDOR" in
-    "AuthenticAMD")
-      MITIS="$MITI_AMD";;
-    "GenuineIntel")
-      MITIS="$MITI_INTEL";;
-    *)
-      echo "Unknown CPU vendor. Please extend this script to handle this!"
-      echo "Aborting..."
-      exit 1;;
-  esac
+  # first, distinguish by ISA type, then further by vendor
+  if [ "$ISA" == "x86_64" ]
+    then
+    case "$VENDOR" in
+      "AuthenticAMD")
+        MITIS="$MITI_AMD";;
+      "GenuineIntel")
+        MITIS="$MITI_INTEL";;
+      *)
+        echo "Unknown CPU vendor \"$VENDOR\"."
+        echo "Please extend this script to handle this!"
+        echo "Aborting..."
+        exit 1;;
+    esac
+  elif [ "$ISA" == "aarch64" ]
+    then
+    case "$VENDOR" in
+      *)
+        echo "Unknown CPU vendor \"$VENDOR\"."
+        echo "Please extend this script to handle this!"
+        echo "Aborting..."
+        exit 1;;
+    esac
+  else
+    echo "Unknown ISA \"$ISA\" found. Please extend this script to handle this."
+    echo "Aborting..."
+    exit 1
+  fi
 }
 
 #
@@ -151,25 +172,42 @@ check_kernel () {
 #       they should be reset after the next reboot.
 #
 disable_cpu_scaling () {
-  # switch off turbo mode and hyperthreading; depends on vendor type
-  case "$VENDOR" in
-    "AuthenticAMD")
-      # disable turbo mode
-      echo 0 > /sys/devices/system/cpu/cpufreq/boost
+  # CPU scaling config depends on both ISA and vendor
+  if [ "$ISA" == "x86_64" ]
+    then
+    # switch off turbo mode and hyperthreading; depends on vendor type
+    case "$VENDOR" in
+      "AuthenticAMD")
+        # disable turbo mode
+        echo 0 > /sys/devices/system/cpu/cpufreq/boost
 
-      # turn off SMT 
-      echo "off" > /sys/devices/system/cpu/smt/control;;
-    "GenuineIntel")
-      # disable turbo mode
-      echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
+        # turn off SMT 
+        echo "off" > /sys/devices/system/cpu/smt/control;;
+      "GenuineIntel")
+        # disable turbo mode
+        echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
 
-      # turn off SMT 
-      echo "off" > /sys/devices/system/cpu/smt/control;;
-    *)
-      echo "Unknown CPU vendor. Please extend this script to handle this!"
-      echo "Aborting..."
-      exit 1;;
-  esac
+        # turn off SMT 
+        echo "off" > /sys/devices/system/cpu/smt/control;;
+      *)
+        echo "Unknown CPU vendor. Please extend this script to handle this!"
+        echo "Aborting..."
+        exit 1;;
+    esac
+  elif [ "$ISA" == "aarch64" ]
+    then
+    case "$VENDOR" in
+      *)
+        echo "Can't configure CPU settings: Unknown CPU vendor \"$VENDOR\"."
+        echo "Please extend this script to handle this!"
+        echo "Aborting..."
+        exit 1;;
+    esac
+  else
+    echo "Unknown ISA \"$ISA\" found. Please extend this script to handle this."
+    echo "Aborting..."
+    exit 1
+  fi
   
   # lastly, set CPU governor for remaining cores
 
@@ -349,16 +387,30 @@ do_reset () {
 # Path of this script
 SPATH=`dirname $0`
 
-# CPU vendor, serves as a indicator for mitigation list
-VENDOR=`cat /proc/cpuinfo | grep vendor_id | head -n 1 | cut -d " " -f 2`
+# ISA type of local machine
+ISA=`uname -i`
 
-# CPU version string
-CPUID=`cat /proc/cpuinfo | grep "model name" \
-                         | head -n 1 \
-                         | tr "\t" " " \
-                         | awk -v FS=":" '{ print($2); }' \
-                         | xargs \
-                         | tr " " "_"`
+if [ "$ISA" == "x86_64" ]
+  then
+  # CPU vendor, serves as a indicator for mitigation list
+  VENDOR=`cat /proc/cpuinfo | grep vendor_id | head -n 1 | cut -d " " -f 2`
+
+  # CPU version string
+  CPUID=`cat /proc/cpuinfo | grep "model name" \
+                           | head -n 1 \
+                           | tr "\t" " " \
+                           | awk -v FS=":" '{ print($2); }' \
+                           | xargs \
+                           | tr " " "_"`
+elif [ "$ISA" == "aarch64" ]
+  then
+  echo "Unknown architecture. Aborting..."
+  exit 1
+else
+  echo "Unknown ISA \"$ISA\" found. Please extend this script to handle this."
+  echo "Aborting..."
+  exit 1
+fi
 
 #
 # Argument parsing

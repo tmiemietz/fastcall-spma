@@ -84,3 +84,12 @@ Plotting
 In order to generate plots from the data available in 'results', run
 
 python3 -m plotting
+
+Miscellaneous
+=============
+
+Kernel setup on ARM
+- Enable expert settings ("General Setup")
+- Disable KAISER (contradicts fastcall on ARM atm, "Kernel Features")
+- Check whether fastcalls are enabled(!)
+- If necessary, include support for Amazon NICs (Elastic Network Adapter)

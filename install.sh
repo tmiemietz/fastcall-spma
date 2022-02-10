@@ -63,8 +63,8 @@ echo
 
 cd $SPATH/benchmark
 mkdir -p $SPATH/benchmark/build
-cmake -E chdir "build" cmake -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on \
-        -DCMAKE_BUILD_TYPE=Release ../
+cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on \
+        -S . -B "build"
 cmake --build "build" --config Release
 sudo cmake --build "build" --config Release --target install
 
