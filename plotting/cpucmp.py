@@ -5,8 +5,8 @@ from matplotlib import pyplot as plt
 import numpy as np
 from .utils import *
 
-PLOT_CPUS = {"Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz": "i7-4790",
-             "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz": "Xeon 8375C"}
+PLOT_CPUS = {"Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz": "Intel Core i7-4790",
+             "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz": "Intel Xeon 8375C"}
 """List of CPUs to compare."""
 
 PLOT_MITI = ("mitigations=auto", "mitigations=off")
@@ -22,10 +22,11 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
-Y_LABEL = "latency relative to fastcalls per CPU [%]"
+Y_LABEL = "latency [ns]"
 LABELS = len(PLOT_CPUS) * len(PLOT_MITI)
 BAR_OFFSET = -(LABELS - 1) * BAR_WIDTH / 2
 BAR_GROUP = LABELS * BAR_WIDTH + BAR_SPACE
+PADDING_TOP = 0.05
 PREFIX = "CPU-compare "
 """Prefix for the plot files."""
 
@@ -36,14 +37,9 @@ def plot(results: Results):
     This uses the latency values which are normalized relative to the latency of
     the first mitigation for each CPU.
     """
-
     cpus = []
     for cpu in PLOT_CPUS:
         cpu = results.array[results.cpus.index(cpu), :, :, :, 0]
-        mi = list(MITIGATIONS.keys()).index(PLOT_MITI[0])
-        me = list(METHODS.keys()).index(NORM_METHOD)
-        norm = cpu[mi, me]
-        cpu = cpu / norm * 100
         cpus.append(cpu)
     cpus = np.stack(cpus)
 
@@ -53,30 +49,50 @@ def plot(results: Results):
 
 
 def plot_scenario(title, results):
-    fig, ax = plt.subplots()
+    method = list(METHODS.keys()).index(NORM_METHOD)
+    mitigation = list(MITIGATIONS.keys()).index(PLOT_MITI[0])
+    fastcalls = results[:, (mitigation,)][:, :, (method,)]
+    relative = results / fastcalls * (1 + PADDING_TOP)
+    y_max = (fastcalls * np.amax(relative)).flatten()
+
+    fig, axes = plt.subplots(ncols=len(PLOT_CPUS))
+
+    for i, (ax, cpu) in enumerate(zip(axes, PLOT_CPUS.values())):
+        plot_cpu(ax, cpu, results[i], y_max[i], i == 0)
+
+    fig.legend(ncol=len(PLOT_MITI), loc="lower center",
+               bbox_to_anchor=(0.5, 0.95))
+    fig.tight_layout()
+
+    plot_file = path.join(PLOTS_DIR, PREFIX + title + PLOT_EXT)
+    fig.savefig(plot_file, bbox_inches="tight")
+
+
+def plot_cpu(ax, cpu, results, y_max, first):
+    """Plot the results for a single CPU into a subplot."""
+
     ax.set_prop_cycle(color=COLORS)
-    ax.set_title(title)
-    ax.set_ylabel(Y_LABEL)
+    ax.set_title(cpu)
+    if first:
+        ax.set_ylabel(Y_LABEL)
 
     labels = []
     bars = []
-    for c, cpu in enumerate(PLOT_CPUS.values()):
-        for mitigation in PLOT_MITI:
-            labels.append(f"{cpu} / {MITIGATIONS[mitigation]}")
-            m = list(MITIGATIONS.keys()).index(mitigation)
-            bars.append(results[c, m])
+    for mitigation in PLOT_MITI:
+        labels.append(MITIGATIONS[mitigation])
+        m = list(MITIGATIONS.keys()).index(mitigation)
+        bars.append(results[m])
 
     x = np.arange(len(METHODS)) * BAR_GROUP
     for i, (ys, label) in enumerate(zip(bars, labels)):
+        if not first:
+            label = None
+
         xs = x + BAR_OFFSET + i * BAR_WIDTH
         ax.bar(xs, ys, BAR_WIDTH, label=label)
 
     ax.set_xticks(x)
     ax.set_xticklabels(METHODS.values())
+    ax.set_ylim(top=y_max)
     ax.set_axisbelow(True)
     ax.yaxis.grid(GRID_ENABLE)
-    ax.legend()
-    fig.tight_layout()
-
-    plot_file = path.join(PLOTS_DIR, PREFIX + title + PLOT_EXT)
-    fig.savefig(plot_file)
