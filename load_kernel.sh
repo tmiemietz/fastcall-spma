@@ -149,6 +149,28 @@ set_kernel () {
      { print($0); }
   '`
 
+  # Show user the new bootloader config file and ask for acknowledgement
+  echo
+  echo "Attempting to write the following into /etc/default/grub:"
+  echo "========================================================="
+  echo
+  echo "$grubconf"
+  echo 
+  echo "========================================================="
+  echo "If you are sure that this is reasonable, type "YeS" to "
+  echo "continue. If in doubt, type anything else to abort."
+  echo
+  echo "Do you want to continue updating your bootloader config?"
+
+  read confirm
+
+  if [ ! "$confirm" == "YeS" ]
+    then
+    echo "User decided do refuse suggested change to bootloader config."
+    echo "Exiting..."
+    exit 1
+  fi
+
   echo "$grubconf" > /etc/default/grub
   # update bootloader 
   if [ -f "/sbin/update-bootloader" ]
