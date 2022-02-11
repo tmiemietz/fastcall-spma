@@ -93,3 +93,11 @@ Kernel setup on ARM
 - Disable KAISER (contradicts fastcall on ARM atm, "Kernel Features")
 - Check whether fastcalls are enabled(!)
 - If necessary, include support for Amazon NICs (Elastic Network Adapter)
+
+Make lscpu print human-readable information
+- git clone https://github.com/karelzak/util-linux
+- ./autogen.sh && ./configure --disable-all-programs --enable-lscpu \
+    --enable-libsmartcols
+- make lscpu
+- Install it somehow, make install yields a broken lscpu, manually copying the
+  binary to /usr/bin did the trick on Amazon Linux.

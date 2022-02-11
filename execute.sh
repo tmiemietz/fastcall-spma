@@ -88,6 +88,8 @@ get_mitigation_list () {
   elif [ "$ISA" == "aarch64" ]
     then
     case "$VENDOR" in
+      "ARM")
+        MITIS="$MITI_ARM";;
       *)
         echo "Unknown CPU vendor \"$VENDOR\"."
         echo "Please extend this script to handle this!"
@@ -197,6 +199,9 @@ disable_cpu_scaling () {
   elif [ "$ISA" == "aarch64" ]
     then
     case "$VENDOR" in
+      "ARM")
+        # ARM has to hyper-threading, also no frequency boosting
+        :;;
       *)
         echo "Can't configure CPU settings: Unknown CPU vendor \"$VENDOR\"."
         echo "Please extend this script to handle this!"
@@ -404,8 +409,21 @@ if [ "$ISA" == "x86_64" ]
                            | tr " " "_"`
 elif [ "$ISA" == "aarch64" ]
   then
-  echo "Unknown architecture. Aborting..."
-  exit 1
+  # CPU vendor, serves as a indicator for mitigation list
+  VENDOR=`lscpu | grep "Vendor ID:" | xargs | cut -d " " -f 3`
+
+  # CPU version string
+  CPUID=`lscpu | grep "Model name:" | xargs | cut -d " " -f 3`
+  
+  # Make sure that there is some human-readable output
+  if [ -z "$VENDOR" ]
+    then
+    echo "ERROR: Your local version of lscpu seems to lack support for"
+    echo "       decoding CPU names of ARM cores. Please install a version"
+    echo "       of lscpu that provides these features and re-run this script."
+    echo "Aborting..."
+    exit 1
+  fi
 else
   echo "Unknown ISA \"$ISA\" found. Please extend this script to handle this."
   echo "Aborting..."
