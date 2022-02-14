@@ -1,0 +1,12 @@
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"syscall_sys_ni_syscall",7212031,97.2668,97.2399,ns,,,,,
+"syscall_array/0",6625106,105.703,105.659,ns,0,,,,
+"syscall_array/8",6672119,104.979,104.934,ns,7.62385e+07,,,,
+"syscall_array/16",6526199,107.304,107.259,ns,1.49171e+08,,,,
+"syscall_array/24",6478092,108.107,108.063,ns,2.22093e+08,,,,
+"syscall_array/32",6526639,107.29,107.26,ns,2.98341e+08,,,,
+"syscall_array/40",6477832,108.087,108.059,ns,3.70169e+08,,,,
+"syscall_array/48",6526385,107.309,107.259,ns,4.47517e+08,,,,
+"syscall_array/56",6478182,108.102,108.058,ns,5.18238e+08,,,,
+"syscall_array/64",6520729,107.302,107.256,ns,5.96701e+08,,,,
+"syscall_nt",,,,,,,,true,"system call failed!"

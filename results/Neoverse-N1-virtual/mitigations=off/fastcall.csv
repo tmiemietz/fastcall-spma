@@ -1,0 +1,15 @@
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"fastcall_noop",19876317,35.2288,35.2185,ns,,,,,
+"ExamplesFixture<fce::IOCTL_NOOP>/fastcall_examples_noop",19434351,36.03,36.0193,ns,,,,,
+"ExamplesFixture<fce::IOCTL_STACK>/fastcall_examples_stack",19433421,36.0298,36.0195,ns,,,,,
+"ExamplesFixture<fce::IOCTL_PRIV>/fastcall_examples_priv",17848022,39.2321,39.2206,ns,,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/0",18219860,38.4313,38.4203,ns,0,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/8",17490875,40.032,40.0202,ns,1.99899e+08,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/16",17317283,40.4334,40.4209,ns,3.95835e+08,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/24",16980473,41.234,41.222,ns,5.82214e+08,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/32",16818092,41.6356,41.6231,ns,7.68805e+08,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/40",16500992,42.4346,42.4223,ns,9.42901e+08,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/48",16346636,42.8351,42.8226,ns,1.1209e+09,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/56",16194847,43.2343,43.2221,ns,1.29563e+09,,,,
+"ExamplesFixture<fce::IOCTL_ARRAY>/fastcall_examples_array/64",16046504,43.6351,43.6224,ns,1.46714e+09,,,,
+"ExamplesFixture<fce::IOCTL_NT>/fastcall_examples_nt",,,,,,,,true,"ioctl failed!"

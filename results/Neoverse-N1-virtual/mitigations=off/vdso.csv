@@ -1,0 +1,12 @@
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"VDSOFixture<VDSO_NOOP>/vdso_noop",218638206,3.2025,3.20159,ns,,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/0",174909025,4.00328,4.00219,ns,0,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/8",174907046,4.00335,4.00226,ns,1.99887e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/16",124928849,5.60438,5.60287,ns,2.85568e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/24",109319117,6.40522,6.40347,ns,3.74797e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/32",97175042,7.2059,7.2038,ns,4.4421e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/40",87451319,8.00649,8.00431,ns,4.99731e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/48",79503374,8.80725,8.80468,ns,5.45165e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/56",72880799,9.6078,9.60521,ns,5.83017e+09,,,,
+"VDSOFixture<VDSO_COPY_ARRAY>/vdso_copy_array/64",67269109,10.4089,10.4057,ns,6.15045e+09,,,,
+"VDSOFixture<VDSO_COPY_NT>/vdso_copy_nt",,,,,,,,true,"vDSO function not found!"
