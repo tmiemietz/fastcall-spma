@@ -64,7 +64,9 @@ def plot_scenario(title, results):
                bbox_to_anchor=(0.5, 0.95))
     fig.tight_layout()
 
-    plot_file = path.join(PLOTS_DIR, PREFIX + title + PLOT_EXT)
+    fname = PREFIX + title + PLOT_EXT
+    fname = fname.replace(" ", "-")
+    plot_file = path.join(PLOTS_DIR, fname)
     fig.savefig(plot_file, bbox_inches="tight")
 
 
