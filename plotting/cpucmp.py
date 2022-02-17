@@ -35,9 +35,10 @@ LABEL_THRESHOLD = 0.1
 LABEL_FMT = "{:.1f}"
 """Format string for bar labels."""
 
-LABEL_FONTSIZE = 10
+LABEL_FONTSIZE = 12
 """Fontsize for bar labels."""
 
+LABEL_PADDING = 2
 PREFIX = "CPU-compare "
 """Prefix for the plot files."""
 
@@ -103,7 +104,8 @@ def plot_cpu(ax, cpu, results, first):
         xs = x + BAR_OFFSET + i * BAR_WIDTH
         bar = ax.bar(xs, ys, BAR_WIDTH, label=label)
         bar_labels = [LABEL_FMT.format(y) if y < threshold else "" for y in ys]
-        ax.bar_label(bar, bar_labels, fontsize=LABEL_FONTSIZE)
+        ax.bar_label(bar, bar_labels, fontsize=LABEL_FONTSIZE,
+                     rotation="vertical", padding=LABEL_PADDING)
 
     ax.set_xticks(x)
     ax.set_xticklabels(METHODS.values())
