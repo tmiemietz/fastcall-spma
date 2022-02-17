@@ -22,7 +22,7 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
-FIGURE_HEIGHT = 3
+FIGURE_SIZE = (6.4, 3)
 TITLE_FONT = {"fontsize": 14}
 Y_LABEL = "Latency [ns]"
 LABELS = len(PLOT_MITI)
@@ -63,14 +63,13 @@ def plot_scenario(title, results):
     method = list(METHODS.keys()).index(NORM_METHOD)
     mitigation = list(MITIGATIONS.keys()).index(PLOT_MITI[0])
 
-    fig, axes = plt.subplots(ncols=len(PLOT_CPUS))
+    fig, axes = plt.subplots(ncols=len(PLOT_CPUS), figsize=FIGURE_SIZE)
 
     for i, (ax, cpu) in enumerate(zip(axes, PLOT_CPUS.values())):
         plot_cpu(ax, cpu, results[i], i == 0)
 
     fig.legend(ncol=len(PLOT_MITI), loc="lower center",
                bbox_to_anchor=(0.5, 0.95))
-    fig.set_figheight(FIGURE_HEIGHT)
     fig.tight_layout()
 
     fname = PREFIX + title + PLOT_EXT

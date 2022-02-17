@@ -33,11 +33,11 @@ STACK = (
 (kernel, measure, label) tuples describing the sections of the stacked bar plot.
 """
 
-FIGURE_HEIGHT = 3.6
+FIGURE_SIZE = (6, 2.5)
 PLOT_NAME = "Fork"
 Y_LABEL = "Latency [µs]"
 SCALING = 10 ** -3
-BAR_WIDTH = 0.3
+BAR_WIDTH = 0.2
 
 
 def process():
@@ -146,7 +146,7 @@ def plot_misc(results: Results):
 def plot_cpu(cpu_dir, results):
     """Plot a fork diagram for the CPU."""
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE)
     ax.set_prop_cycle(color=COLORS)
     ax.set_ylabel(Y_LABEL)
 
@@ -165,7 +165,6 @@ def plot_cpu(cpu_dir, results):
     ax.set_axisbelow(True)
     ax.yaxis.grid(GRID_ENABLE)
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    fig.set_figheight(FIGURE_HEIGHT)
     fig.tight_layout()
 
     plot_file = path.join(cpu_dir, PLOT_NAME + PLOT_EXT)
