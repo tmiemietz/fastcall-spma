@@ -486,7 +486,7 @@ do_reset () {
 SPATH=`dirname $0`
 
 # ISA type of local machine
-ISA=`uname -i`
+ISA=`uname -m`
 
 if [ "$ISA" == "x86_64" ]
   then
