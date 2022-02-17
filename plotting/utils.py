@@ -1,11 +1,16 @@
-from os import scandir, path
+from os import scandir, path, environ
 import csv
 import numpy as np
 
 RESULTS_DIR = "./results/"
 PLOTS_DIR = "./plots/"
 CSV_EXT = ".csv"
-PLOT_EXT = ".png"
+PLOT_EXT = environ.get("PLOT_EXT", ".png")
+"""Change this to .pdf if you want to generate PDF plots."""
+
+PLOTTED_CPUS = ("AMD_Ryzen_7_3700X_8-Core_Processor",
+                "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz",
+                "Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz")
 
 MITIGATIONS = {"mitigations=auto": "Default Mitigations",
                "nopti%mds=off": "No KPTI/MDS", "mitigations=off": "No Mitigations"}
@@ -35,6 +40,9 @@ FONT = {"family": ["Linux Libertine", "Libertinus Serif", "serif"],
         "size": 14}
 """This mimics the font used in the paper."""
 
+FRAMEON = False
+"""Should there be a boarder around legends?"""
+
 
 class Results:
     def __init__(self, array, cpus):
@@ -54,6 +62,9 @@ def read_benchmarks():
     with scandir(RESULTS_DIR) as it:
         for entry in it:
             if not entry.is_dir():
+                continue
+
+            if not entry.name in PLOTTED_CPUS:
                 continue
 
             results.append(read_cpu(entry.path))

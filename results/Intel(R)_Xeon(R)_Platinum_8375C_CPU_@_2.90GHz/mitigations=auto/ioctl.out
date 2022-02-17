@@ -1,9 +1,9 @@
-2021-12-10T17:48:24+00:00
+2022-02-17T14:05:40+00:00
 Running ./fastcall-benchmarks/build/benchmark/fastcall-benchmark
-Run on (128 X 864.698 MHz CPU s)
+Run on (64 X 1673.72 MHz CPU s)
 CPU Caches:
   L1 Data 48 KiB (x64)
   L1 Instruction 32 KiB (x64)
   L2 Unified 1280 KiB (x64)
   L3 Unified 55296 KiB (x2)
-Load Average: 2.40, 1.65, 0.66
+Load Average: 0.31, 0.09, 0.02

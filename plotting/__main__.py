@@ -6,6 +6,7 @@ from .utils import *
 def main():
     """This iterates through all tested CPUs and generates plots."""
     plt.rc("font", **FONT)
+    plt.rc("legend", frameon=FRAMEON)
 
     results = read_benchmarks()
     percpu.plot(results)
