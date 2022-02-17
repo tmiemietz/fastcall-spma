@@ -40,6 +40,9 @@ FONT = {"family": ["Linux Libertine", "Libertinus Serif", "serif"],
         "size": 14}
 """This mimics the font used in the paper."""
 
+FRAMEON = False
+"""Should there be a boarder around legends?"""
+
 
 class Results:
     def __init__(self, array, cpus):
