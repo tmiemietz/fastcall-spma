@@ -22,8 +22,10 @@ BAR_WIDTH = 1
 BAR_SPACE = 0.6
 """Space between groups of bars in the plots."""
 
+FIGURE_HEIGHT = 3
+TITLE_FONT = {"fontsize": 14}
 Y_LABEL = "Latency [ns]"
-LABELS = len(PLOT_CPUS) * len(PLOT_MITI)
+LABELS = len(PLOT_MITI)
 BAR_OFFSET = -(LABELS - 1) * BAR_WIDTH / 2
 BAR_GROUP = LABELS * BAR_WIDTH + BAR_SPACE
 PADDING_TOP = 0.05
@@ -62,6 +64,7 @@ def plot_scenario(title, results):
 
     fig.legend(ncol=len(PLOT_MITI), loc="lower center",
                bbox_to_anchor=(0.5, 0.95))
+    fig.set_figheight(FIGURE_HEIGHT)
     fig.tight_layout()
 
     fname = PREFIX + title + PLOT_EXT
@@ -74,7 +77,7 @@ def plot_cpu(ax, cpu, results, y_max, first):
     """Plot the results for a single CPU into a subplot."""
 
     ax.set_prop_cycle(color=COLORS)
-    ax.set_title(cpu)
+    ax.set_title(cpu, TITLE_FONT)
     if first:
         ax.set_ylabel(Y_LABEL)
 

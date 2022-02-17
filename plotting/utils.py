@@ -6,10 +6,11 @@ RESULTS_DIR = "./results/"
 PLOTS_DIR = "./plots/"
 CSV_EXT = ".csv"
 PLOT_EXT = ".png"
+"""Change this to .pdf if you want to generate PDF plots."""
 
-PLOTTED_CPUS= ("AMD_Ryzen_7_3700X_8-Core_Processor",                            
-               "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz",                 
-               "Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz") 
+PLOTTED_CPUS = ("AMD_Ryzen_7_3700X_8-Core_Processor",
+                "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz",
+                "Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz")
 
 MITIGATIONS = {"mitigations=auto": "Default Mitigations",
                "nopti%mds=off": "No KPTI/MDS", "mitigations=off": "No Mitigations"}
@@ -59,7 +60,7 @@ def read_benchmarks():
         for entry in it:
             if not entry.is_dir():
                 continue
-            
+
             if not entry.name in PLOTTED_CPUS:
                 continue
 

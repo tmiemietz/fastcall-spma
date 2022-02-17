@@ -25,14 +25,15 @@ GRID_ENABLE = True
 """Show horizontal grid lines."""
 
 STACK = (
-    ("fastcall", "fork-fastcall", "W/ Registrations"),
-    ("fastcall", "fork-simple", "W/O Registrations"),
+    ("fastcall", "fork-fastcall", "With\nRegistrations"),
+    ("fastcall", "fork-simple", "Without\nRegistrations"),
     ("stock", "fork-simple", "Stock Kernel"),
 )
 """
 (kernel, measure, label) tuples describing the sections of the stacked bar plot.
 """
 
+FIGURE_HEIGHT = 3.6
 PLOT_NAME = "Fork"
 Y_LABEL = "Latency [µs]"
 SCALING = 10 ** -3
@@ -163,7 +164,8 @@ def plot_cpu(cpu_dir, results):
     ax.set_xlim((-0.5, len(MITIGATIONS) - 0.5))
     ax.set_axisbelow(True)
     ax.yaxis.grid(GRID_ENABLE)
-    ax.legend(loc="lower center", ncol=len(labels), bbox_to_anchor=(0.5, 1))
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    fig.set_figheight(FIGURE_HEIGHT)
     fig.tight_layout()
 
     plot_file = path.join(cpu_dir, PLOT_NAME + PLOT_EXT)
