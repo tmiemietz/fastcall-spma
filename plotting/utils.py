@@ -1,11 +1,11 @@
-from os import scandir, path
+from os import scandir, path, environ
 import csv
 import numpy as np
 
 RESULTS_DIR = "./results/"
 PLOTS_DIR = "./plots/"
 CSV_EXT = ".csv"
-PLOT_EXT = ".png"
+PLOT_EXT = environ.get("PLOT_EXT", ".png")
 """Change this to .pdf if you want to generate PDF plots."""
 
 PLOTTED_CPUS = ("AMD_Ryzen_7_3700X_8-Core_Processor",
