@@ -52,6 +52,12 @@ usage () {
   echo "            complete. Watch the output of the script for instructions."
   echo "            Options: none"
   echo
+  echo "run-cycle - Runs microbenchmarks for the CPU type of this machine with"
+  echo "            cycle accurate measurement. May require multiple reboots "
+  echo "            with different kernels to complete. Watch the output of "
+  echo "            the script for instructions."
+  echo "            Options: none"
+  echo 
   echo "run-misc  - Runs the misc benchmarks for the CPU type of this machine."
   echo "            May require multiple reboots with different kernels to"
   echo "            complete. Watch the output of the script for instructions."
@@ -283,6 +289,93 @@ do_run_micro () {
 }
 
 #
+# Runs cycle-accurate microbenchmarks. Multiple reboots and kernel switches 
+# may be required in between!
+#
+do_run_cycle () {
+  # list of misc benchmarks to run for a certain kernel type
+  typeset cycle_benchs=""
+
+  get_mitigation_list
+
+  # set CPU governor to performance for this boot cycle (will be reset to
+  # system default after next reboot)
+  disable_cpu_scaling
+
+  for miti in $MITIS
+    do
+    # create results directory
+    mkdir -p ${SPATH}/results/${CPUID}/${miti}
+    
+    # do misc benchmarks for both the fastcall and the fccmp kernel
+    for ktype in "fastcall" "fccmp"
+      do
+      echo "Running cycle benchmarks for kernel config ${ktype}/${miti}..."
+      
+      # check if benchmark was already conducted
+      if [ -f ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv ]
+        then
+        echo "Benchmark results already present. Skipping..."
+        continue
+      fi
+
+      # set list of misc benchmarks to run for this kernel type
+      if [ "$ktype" == "fastcall" ]
+        then
+        cycle_benchs="noop fastcall"
+      else
+        # leave some benchmarks out as they can only be performed with a 
+        # fastcall-enabled kernel.
+        cycle_benchs="noop vdso syscall ioctl"
+      fi
+
+      for bench in $cycle_benchs
+        do
+        echo "Running cycle benchmark case ${bench}..."
+
+        # check if kernel config fits the next benchmark, here: use ktype to
+        # load appropriate kernel version (fastcall requires fastcall kernel,
+        # everything else will be mapped to fccmp).
+        check_kernel "$miti" "$ktype"
+
+        csv=`${SPATH}/fastcall-benchmarks/build/cycles/fastcall-cycles \
+             ${bench} \
+             2>${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}-${bench}.out`
+
+        if [ $? -ne 0 ]
+          then
+          echo "Benchmark $bench failed. See output below: "
+          echo 
+          cat ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}-${bench}.out
+          continue
+        fi
+
+        # if result file does not exist, create it, otherwise do merging
+        if [ ! -f ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv ]
+          then
+          printf "${bench}\n${csv}" \
+                  > ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv
+        else
+          # write results to temporary file, merge result files later on
+          printf "${bench}\n${csv}" > ${SPATH}/results/${CPUID}/${miti}/cycles.p
+
+          # merge files
+          paste -d "," ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv \
+                       ${SPATH}/results/${CPUID}/${miti}/cycles.p \
+                       > ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv.tmp
+
+          # remove tempfiles
+          mv ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv.tmp \
+             ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv
+          rm ${SPATH}/results/${CPUID}/${miti}/cycles.p
+        fi
+      done
+      echo "Done."
+    done
+  done
+}
+
+#
 # Runs "miscellaneous" experiments. Multiple reboots and kernel switches may be
 # required in between!
 #
@@ -451,6 +544,12 @@ case "$CMD" in
 
     echo
     echo "Microbenchmarks finished for local CPU type $CPUID."
+    echo;;
+  "run-cycle")
+    do_run_cycle
+
+    echo
+    echo "Cycle-accurate microbenchmarks finished for local CPU type $CPUID."
     echo;;
   "run-misc")
     do_run_misc
