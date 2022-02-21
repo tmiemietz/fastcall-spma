@@ -29,8 +29,6 @@ load_kernel.sh - Configures a new kernel for use after next power cycle.
 
 execute.sh     - Performs the benchmarks.
 
-plots.py       - Plots the results.
-
 
 Setup
 =====
@@ -43,13 +41,23 @@ After cloning the repository, set up its submodules by executing
 
 git submodule update --init --recursive
 
-then, run 
+then, on some systems (but x86 only) you can run 
 
-./install 
+./install.sh 
 
 from the root of this repository. Note that errors during the compilation
-process of any component (e.g. due to missing packages) may require you to
-execute the commands listed in 'install.sh' manually.
+process of any component (e.g. due to missing packages or build tools named
+differently on your distribution (e.g. cmake3 instead of cmake) may require 
+you to execute the commands listed in 'install.sh' manually.
+
+Take also care when configuring the fastcall/fastcall-arm64 and fccmp kernels 
+that are needed to run the benchmarks. 'install.sh' will configure them with 
+'make defconfig', which might not be sufficient to create a working kernel 
+image for your machine. If in doubt, execute the installation commands manually,
+configuring the kernel with 'make localmodconfig'. Also take care that all
+required file system and networking drivers are built. For instance, when 
+using a machine  from AWS, make sure that the drivers for Amazon's Elastic 
+Network Adapter are enabled in the respective kernel configurations. 
 
 
 Running the Benchmarks
@@ -57,7 +65,7 @@ Running the Benchmarks
 
 In order to run the benchmarks for your machine, execute
 
-./execute.sh run
+./execute.sh [run-micro | run-cycle | run-misc]
 
 from the command line. This will guide you through the benchmarks. Note that
 in  order to complete all experiments, you will have to load different kernels
@@ -65,11 +73,31 @@ and thus reboot the machine multiple times. Follow the instructions printed
 by the 'execute.sh' script. It will provide you with the correct command line
 that you should enter in order to load the appropriate kernel for continuing
 with the experiments. After rebooting the machine, continue with the command 
-above. Repeat these steps, until 'execute.sh' exits with a success message.
+chosen from the options above. Repeat these steps, until 'execute.sh' exits
+with a success message.
+
+'execute.sh' provides the following benchmark suites:
+
+run-micro - Run microbenchmarks for obtaining the latency for bare operations
+            as well as memcpy examples for the vDSO, system call, ioctl, and
+            fastcall mechanism. Results are computed in nanoseconds.
+
+run-cycle - Same as above but counts CPU cycles.
+
+run-misc  - Conducts auxiliary benchmarks regarding the performance of fastcall
+            (de-) registration as well as forking.
 
 Note that 'execute.sh' will only conduct the experiments for the CPU type
 present on the local machine. In order to obtain the all numbers, you may have
 to run the same procedure on different machines.
+
+Also, the 'load_kernel.sh' script will not work for some distributions. It 
+currently only supports a GRUB config which has an "Advanced Options" menu that
+contains the non-default boot entries. 'load_kernel.sh' will ask you before
+updating the bootloader config, so you can intervene if things go wrong. In
+case that your bootloader config is not supported by 'load_kernel.sh', you will
+have to update your bootloader manually, setting the right kernel to boot next,
+as well as the appropriate kernel options for continuing with the benchmarks.
 
 By default, 'execute.sh' will skip benchmark runs for which results are 
 already present in the 'results' directory. If you wish to reset the numbers
@@ -85,19 +113,38 @@ In order to generate plots from the data available in 'results', run
 
 python3 -m plotting
 
-Miscellaneous
-=============
+Hints for Running the Benchmarks on ARM
+=======================================
 
-Kernel setup on ARM
-- Enable expert settings ("General Setup")
-- Disable KAISER (contradicts fastcall on ARM atm, "Kernel Features")
-- Check whether fastcalls are enabled(!)
-- If necessary, include support for Amazon NICs (Elastic Network Adapter)
+Kernel Setup: When running on ARM, you have to compile the fastcall-arm64 
+              kernel (subdir linux-fastcall-arm64), instead of the x86-fastcall
+              kernel (subdir linux-fastcall). Regardless of the CPU 
+              architecture, the fccmp kernel (subdir linux-fccmp) must be 
+              always built and installed.
 
-Make lscpu print human-readable information
-- git clone https://github.com/karelzak/util-linux
-- ./autogen.sh && ./configure --disable-all-programs --enable-lscpu \
-    --enable-libsmartcols
-- make lscpu
-- Install it somehow, make install yields a broken lscpu, manually copying the
-  binary to /usr/bin did the trick on Amazon Linux.
+              Furthermore, the fastcall mechanism is currently not supported
+              for ARM kernels with mitigations. In order to build a working
+              fastcall kernel on ARM, you thus have to configure it 
+              accordingly: Enable the expert settings ("General Setup"), then
+              disable KAISER which currently contradicts fastcalls on ARM
+              ("General Setup"). Afterwards, check whether fastcalls are
+              actually enabled ("Device Drivers").
+
+lscpu support: On ARM, Linux may not print out human-readable CPU information
+               by default. However, the scripts in this repository rely on
+               this information to be present (e.g. like human-readable 
+               vendor and model information in lscpu or /proc/cpuinfo).
+               On ARM, you may need to install an alternative version of lscpu
+               that supports decoding of CPU types and model names.
+
+               For example, on AWS machines with Graviton CPUs, the following
+               may work:
+
+               git clone https://github.com/karelzak/util-linux
+               cd util-linux
+               ./autogen.sh
+               ./configure --disable-all-programs --enable-lscpu \
+                        --enable-libsmartcols
+               make lscpu
+
+               Install the resulting lscpu binary on your system.
