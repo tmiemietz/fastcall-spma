@@ -27,7 +27,7 @@ GRID_ENABLE = True
 STACK = (
     ("fastcall", "fork-fastcall", "With\nRegistrations"),
     ("fastcall", "fork-simple", "Without\nRegistrations"),
-    ("stock", "fork-simple", "Stock Kernel"),
+    ("stock", "fork-simple", "Vanilla Kernel"),
 )
 """
 (kernel, measure, label) tuples describing the sections of the stacked bar plot.
