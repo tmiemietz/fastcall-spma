@@ -505,7 +505,7 @@ do_run_syscall () {
 
     echo "Running syscall benchmarks for mitigation ${miti}..."
 
-    file="${SPATH}/results/${CPUID}/${miti}/syscall.csv"
+    file="${SPATH}/results/${CPUID}/${miti}/syscall-bench.csv"
     # check if benchmark was already conducted
     if [ -f "$file" ]
       then
@@ -516,7 +516,7 @@ do_run_syscall () {
     # check if kernel config fits the next benchmark
     check_kernel "$miti" syscall-bench
 
-    out="${SPATH}/results/${CPUID}/${miti}/syscall.out"
+    out="${SPATH}/results/${CPUID}/${miti}/syscall-bench.out"
     csv=`${SPATH}/fastcall-benchmarks/build/syscall/syscall \
          >"$file" \
          2>"$out"`
