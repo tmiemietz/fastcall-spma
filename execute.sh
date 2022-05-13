@@ -1,4 +1,4 @@
-#! /bin/bash 
+#! /bin/bash
 
 ################################################################################
 #                                                                              #
@@ -47,28 +47,33 @@ usage () {
   echo "List of Accepted Commands:"
   echo "=========================="
   echo
-  echo "run-micro - Runs microbenchmarks for the CPU type of this machine. May"
-  echo "            require multiple reboots with different kernels to"
-  echo "            complete. Watch the output of the script for instructions."
-  echo "            Options: none"
+  echo "run-micro    - Runs microbenchmarks for the CPU type of this machine. May"
+  echo "               require multiple reboots with different kernels to"
+  echo "               complete. Watch the output of the script for instructions."
+  echo "               Options: none"
   echo
-  echo "run-cycle - Runs microbenchmarks for the CPU type of this machine with"
-  echo "            cycle accurate measurement. May require multiple reboots "
-  echo "            with different kernels to complete. Watch the output of "
-  echo "            the script for instructions."
-  echo "            Options: none"
-  echo 
-  echo "run-misc  - Runs the misc benchmarks for the CPU type of this machine."
-  echo "            May require multiple reboots with different kernels to"
-  echo "            complete. Watch the output of the script for instructions."
-  echo "            Options: none"
+  echo "run-cycle    - Runs microbenchmarks for the CPU type of this machine with"
+  echo "               cycle accurate measurement. May require multiple reboots "
+  echo "               with different kernels to complete. Watch the output of "
+  echo "               the script for instructions."
+  echo "               Options: none"
   echo
-  echo "reset     - Clears benchmark results for the CPU type of this machine."
-  echo "            Options: none"
-  echo 
-  echo "help      - Outputs this help and exits."
-  echo "            Options: none"
-  echo 
+  echo "run-misc     - Runs the misc benchmarks for the CPU type of this machine."
+  echo "               May require multiple reboots with different kernels to"
+  echo "               complete. Watch the output of the script for instructions."
+  echo "               Options: none"
+  echo
+  echo "run-syscall  - Runs the syscall benchmark for the CPU type of this machine."
+  echo "               May require multiple reboots with different mitigations to"
+  echo "               complete. Watch the output of the script for instructions."
+  echo "               Options: none"
+  echo
+  echo "reset        - Clears benchmark results for the CPU type of this machine."
+  echo "               Options: none"
+  echo
+  echo "help         - Outputs this help and exits."
+  echo "               Options: none"
+  echo
   echo "Options:"
   echo "=========================="
 }
@@ -129,28 +134,43 @@ check_kernel () {
   # check if proper kernel (fastcall / fccmp) was loaded
   if [ "$2" == "fastcall" ]
     then
-    # name of kernel that should be booted 
+    # name of kernel that should be booted
     nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fastcall`
     nkernv=${nkernv##vmlinuz-}
-    
+
     if [[ ! $kversion == *"fastcall"* ]]
       then
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
       echo "./load_kernel.sh set --version $nkernv --options $opts"
       exit 2
     fi
-  else
+  elif [ "$2" == "fccmp" ]
+  then
     # name of kernel that should be booted
     nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep fccmp`
     nkernv=${nkernv##vmlinuz-}
-    
+
     if [[ ! $kversion == *"fccmp"* ]]
       then
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
+      echo "./load_kernel.sh set --version $nkernv --options $opts"
+      exit 2
+    fi
+  elif [ "$2" == "syscall-bench" ]
+  then
+    # name of kernel that should be booted
+    nkernv=`ls /boot | grep vmlinuz-.* | grep -v old | grep syscall-bench`
+    nkernv=${nkernv##vmlinuz-}
+
+    if [[ ! $kversion == *"syscall-bench"* ]]
+      then
+      echo "ERROR: Wrong kernel version!"
+      echo "Run the following command, reboot and continue execution: "
+      echo
       echo "./load_kernel.sh set --version $nkernv --options $opts"
       exit 2
     fi
@@ -163,7 +183,7 @@ check_kernel () {
       then
       echo "ERROR: Kernel mitigation options are incorrect for the benchmark!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
       echo "./load_kernel.sh set --version $nkernv --options $opts"
       exit 2
     fi
@@ -189,13 +209,13 @@ disable_cpu_scaling () {
         # disable turbo mode
         echo 0 > /sys/devices/system/cpu/cpufreq/boost
 
-        # turn off SMT 
+        # turn off SMT
         echo "off" > /sys/devices/system/cpu/smt/control;;
       "GenuineIntel")
         # disable turbo mode
         echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo
 
-        # turn off SMT 
+        # turn off SMT
         echo "off" > /sys/devices/system/cpu/smt/control;;
       *)
         echo "Unknown CPU vendor. Please extend this script to handle this!"
@@ -219,7 +239,7 @@ disable_cpu_scaling () {
     echo "Aborting..."
     exit 1
   fi
-  
+
   # lastly, set CPU governor for remaining cores
 
   # way for doing this on SuSE / Debian
@@ -229,7 +249,7 @@ disable_cpu_scaling () {
   # scaling
   if [ $? -ne 0 ]
     then
-    echo 
+    echo
     echo "##################################################################"
     echo "WARNING: Failed to disable CPU scaling. Check benchmark output to "
     echo "         assure that the CPU governor is set to \"performance\"!"
@@ -257,7 +277,7 @@ do_run_micro () {
     for bench in $BENCHS
       do
       echo "Running benchmark $bench for kernel config ${miti}..."
-      
+
       # check if benchmark was already conducted
       if [ -f ${SPATH}/results/${CPUID}/${miti}/${bench}.csv ]
         then
@@ -275,7 +295,7 @@ do_run_micro () {
       if [ $? -ne 0 ]
         then
         echo "Benchmark $bench failed. See output below: "
-        echo 
+        echo
         cat ${SPATH}/results/${CPUID}/${miti}/${bench}.out
         continue
       fi
@@ -289,7 +309,7 @@ do_run_micro () {
 }
 
 #
-# Runs cycle-accurate microbenchmarks. Multiple reboots and kernel switches 
+# Runs cycle-accurate microbenchmarks. Multiple reboots and kernel switches
 # may be required in between!
 #
 do_run_cycle () {
@@ -306,12 +326,12 @@ do_run_cycle () {
     do
     # create results directory
     mkdir -p ${SPATH}/results/${CPUID}/${miti}
-    
+
     # do misc benchmarks for both the fastcall and the fccmp kernel
     for ktype in "fastcall" "fccmp"
       do
       echo "Running cycle benchmarks for kernel config ${ktype}/${miti}..."
-      
+
       # check if benchmark was already conducted
       if [ -f ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}.csv ]
         then
@@ -324,7 +344,7 @@ do_run_cycle () {
         then
         cycle_benchs="noop fastcall"
       else
-        # leave some benchmarks out as they can only be performed with a 
+        # leave some benchmarks out as they can only be performed with a
         # fastcall-enabled kernel.
         cycle_benchs="noop vdso syscall ioctl"
       fi
@@ -345,7 +365,7 @@ do_run_cycle () {
         if [ $? -ne 0 ]
           then
           echo "Benchmark $bench failed. See output below: "
-          echo 
+          echo
           cat ${SPATH}/results/${CPUID}/${miti}/cycles-${ktype}-${bench}.out
           continue
         fi
@@ -393,12 +413,12 @@ do_run_misc () {
     do
     # create results directory
     mkdir -p ${SPATH}/results/${CPUID}/${miti}
-    
+
     # do misc benchmarks for both the fastcall and the fccmp kernel
     for ktype in "fastcall" "fccmp"
       do
       echo "Running misc benchmarks for kernel config ${ktype}/${miti}..."
-      
+
       # check if benchmark was already conducted
       if [ -f ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}.csv ]
         then
@@ -409,13 +429,13 @@ do_run_misc () {
       # set list of misc benchmarks to run for this kernel type
       if [ "$ktype" == "fastcall" ]
         then
-        misc_benchs="noop 
-                     registration-minimal registration-mappings 
+        misc_benchs="noop
+                     registration-minimal registration-mappings
                      deregistration-minimal deregistration-mappings
                      fork-simple fork-fastcall
                      vfork-simple vfork-fastcall"
       else
-        # leave some benchmarks out as they can only be performed with a 
+        # leave some benchmarks out as they can only be performed with a
         # fastcall-enabled kernel.
         misc_benchs="noop
                      fork-simple vfork-simple"
@@ -437,7 +457,7 @@ do_run_misc () {
         if [ $? -ne 0 ]
           then
           echo "Benchmark $bench failed. See output below: "
-          echo 
+          echo
           cat ${SPATH}/results/${CPUID}/${miti}/misc-${ktype}-${bench}.out
           continue
         fi
@@ -464,6 +484,52 @@ do_run_misc () {
       done
       echo "Done."
     done
+  done
+}
+
+#
+# Runs "syscall" experiments. Multiple reboots and config switches may be
+# required in between!
+#
+do_run_syscall () {
+  get_mitigation_list
+
+  # set CPU governor to performance for this boot cycle (will be reset to
+  # system default after next reboot)
+  disable_cpu_scaling
+
+  for miti in $MITIS
+    do
+    # create results directory
+    mkdir -p ${SPATH}/results/${CPUID}/${miti}
+
+    echo "Running syscall benchmarks for mitigation ${miti}..."
+
+    file="${SPATH}/results/${CPUID}/${miti}/syscall.csv"
+    # check if benchmark was already conducted
+    if [ -f "$file" ]
+      then
+      echo "Benchmark results already present. Skipping..."
+      continue
+    fi
+
+    # check if kernel config fits the next benchmark
+    check_kernel "$miti" syscall-bench
+
+    out="${SPATH}/results/${CPUID}/${miti}/syscall.out"
+    csv=`${SPATH}/fastcall-benchmarks/build/syscall/syscall \
+         >"$file" \
+         2>"$out"`
+
+    if [ $? -ne 0 ]
+      then
+      echo "Benchmark $bench failed. See output below: "
+      echo
+      cat "$out"
+      continue
+    fi
+
+    echo "Done."
   done
 }
 
@@ -507,7 +573,7 @@ elif [ "$ISA" == "aarch64" ]
 
   # CPU version string
   CPUID=`lscpu | grep "Model name:" | xargs | cut -d " " -f 3`
-  
+
   # Make sure that there is some human-readable output
   if [ -z "$VENDOR" ]
     then
@@ -556,6 +622,12 @@ case "$CMD" in
 
     echo
     echo "Miscellaneous benchmarks finished for local CPU type $CPUID."
+    echo;;
+  "run-syscall")
+    do_run_syscall
+
+    echo
+    echo "Syscall benchmarks finished for local CPU type $CPUID."
     echo;;
   "reset")
     do_reset;;
