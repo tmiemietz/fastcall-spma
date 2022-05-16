@@ -1,6 +1,6 @@
 library(tidyverse)
 
-RESULTS <- "results/syscall_bench"
+PLOTS <- "plots/syscall_bench"
 
 evaluate <- function(path) {
   df <- read_csv(path, col_types = "d")
@@ -31,13 +31,13 @@ for (csv in list.files(pattern = "syscall-bench.csv", recursive = TRUE)) {
   df <- rbind(df, tmp)
 }
 
-dir.create(RESULTS, recursive = TRUE, showWarnings = FALSE)
+dir.create(PLOTS, recursive = TRUE, showWarnings = FALSE)
 
 plot <- ggplot(df, aes(step, cycles, fill = miti)) +
   geom_bar(stat = "identity", show.legend = FALSE) +
   facet_grid(cpu ~ miti) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-ggsave("bar_per_miti.png", plot, path = RESULTS)
+ggsave("bar_per_miti.png", plot, path = PLOTS)
 
 plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
   geom_bar(stat = "identity") +
@@ -46,9 +46,9 @@ plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
     axis.title.x = element_blank(), axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )
-ggsave("bar_per_step.png", plot, path = RESULTS)
+ggsave("bar_per_step.png", plot, path = PLOTS)
 
 plot <- ggplot(df, aes(miti, cycles, fill = step)) +
   geom_bar(stat = "identity") +
   facet_grid(. ~ cpu)
-ggsave("stacked_bar.png", plot, path = RESULTS)
+ggsave("stacked_bar.png", plot, path = PLOTS)
