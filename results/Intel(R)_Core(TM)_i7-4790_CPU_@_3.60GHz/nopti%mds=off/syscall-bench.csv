@@ -1,4 +1,4 @@
-      start,   overhead,     sycall,   swapgs_k,      cr3_k,  push_regs,       func, do_syscall, ret_checks,   pop_regs,      cr3_u,   swapgs_u,     sysret
+      start,   overhead,     sycall,   swapgs_k,      cr3_k,  push_regs, func_entry,  func_exit, ret_checks,   pop_regs,      cr3_u,   swapgs_u,     sysret
           0,        236,        651,        920,       1203,       1480,       2235,       2865,       3142,       3468,       3747,       3995,       4515
           0,        233,        568,        838,       1106,       1381,       1699,       2010,       2288,       2564,       2813,       3058,       3350
           0,        233,        516,        786,       1040,       1301,       1618,       1931,       2183,       2434,       2682,       2927,       3222
