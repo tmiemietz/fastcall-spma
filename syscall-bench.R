@@ -1,6 +1,7 @@
 library(tidyverse)
 
 PLOTS <- "plots/syscall_bench"
+EXT <- ".png"
 
 evaluate <- function(path) {
   df <- read_csv(path, col_types = "d")
@@ -37,7 +38,7 @@ plot <- ggplot(df, aes(step, cycles, fill = miti)) +
   geom_bar(stat = "identity", show.legend = FALSE) +
   facet_grid(cpu ~ miti) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
-ggsave("bar_per_miti.png", plot, path = PLOTS)
+ggsave(paste0("bar_per_miti", EXT), plot, path = PLOTS)
 
 plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
   geom_bar(stat = "identity") +
@@ -46,7 +47,7 @@ plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
     axis.title.x = element_blank(), axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )
-ggsave("bar_per_step.png", plot, path = PLOTS)
+ggsave(paste0("bar_per_step", EXT), plot, path = PLOTS)
 
 plot <- ggplot(df, aes(miti, cycles, fill = step)) +
   geom_bar(
@@ -55,4 +56,4 @@ plot <- ggplot(df, aes(miti, cycles, fill = step)) +
   ) +
   facet_grid(. ~ cpu) +
   guides(fill = guide_legend(reverse = TRUE))
-ggsave("stacked_bar.png", plot, path = PLOTS)
+ggsave(paste0("stacked_bar", EXT), plot, path = PLOTS)
