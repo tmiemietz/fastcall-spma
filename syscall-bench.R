@@ -49,6 +49,10 @@ plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
 ggsave("bar_per_step.png", plot, path = PLOTS)
 
 plot <- ggplot(df, aes(miti, cycles, fill = step)) +
-  geom_bar(stat = "identity") +
-  facet_grid(. ~ cpu)
+  geom_bar(
+    stat = "identity", position = position_stack(reverse = TRUE),
+    color = "gray"
+  ) +
+  facet_grid(. ~ cpu) +
+  guides(fill = guide_legend(reverse = TRUE))
 ggsave("stacked_bar.png", plot, path = PLOTS)
