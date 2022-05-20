@@ -39,7 +39,9 @@ usage () {
   echo "        If --options is given, this must be the last option since the "
   echo "        entire following command line will be taken verbatim as a "
   echo "        string of multiple kernel parameters that will be injected "
-  echo "        into the booting config."
+  echo "        into the booting config. The script will try to preserve the "
+  echo "        existing kernel options, only overriding / adding those "
+  echo "        specified by the options string."
   echo "        Options: --version , --options (optional)"
   echo
   echo "help -  Outputs this help and exits."
@@ -134,14 +136,112 @@ set_kernel () {
                          }
 
      # replace option string with the one passed by the user.
-     /^GRUB_CMDLINE_LINUX=.*$/ { 
-            print("GRUB_CMDLINE_LINUX=\"" opt "\"");
+     /^GRUB_CMDLINE_LINUX=.*$/ {
+            # options that are currently active in the system
+            gsub("GRUB_CMDLINE_LINUX=", "");
+            gsub("\"", "");
+
+            cur_opt_cnt = split($0, cur_opt_arr, " ");
+            new_opt_cnt = split(opt, new_opt_arr, " ");
+
+            for (i = 1; i <= new_opt_cnt; i++) {
+                idx = index(new_opt_arr[i], "=");
+                if (idx == 0) {
+                    new_opt_tag[new_opt_arr[i]] = i;
+                }
+                else {
+                    tag = substr(new_opt_arr[i], 0, idx - 1);
+                    new_opt_tag[tag] = i;
+                }
+            }
+
+            # print bracketing variable name
+            printf("GRUB_CMDLINE_LINUX=\"");
+            
+            for (j = 1; j <= cur_opt_cnt; j++) {
+                cur_tag = "";
+
+                idx = index(cur_opt_arr[j], "=");
+                if (idx == 0) {
+                    cur_tag = cur_opt_arr[j];
+                }
+                else {
+                    cur_tag = substr(cur_opt_arr[j], 0, idx - 1);
+                }
+                
+                if (cur_tag in new_opt_tag) {
+                    printf(new_opt_arr[new_opt_tag[cur_tag]]);
+                    delete new_opt_arr[new_opt_tag[cur_tag]];
+                }
+                else {
+                    printf(cur_opt_arr[j]);
+                }
+
+                printf(" ");
+            }
+
+            # output remaining new options
+            for (new_opt in new_opt_arr) {
+                printf(new_opt_arr[new_opt] " ");
+            }
+
+            # close option string (with newline at the end)
+            print("\"");
             next;
           }
 
      # clear GRUB_CMDLINE_LINUX_DEFAULT, too
      /^GRUB_CMDLINE_LINUX_DEFAULT=.*$/ { 
-            print("GRUB_CMDLINE_LINUX_DEFAULT=\"\"");
+            # options that are currently active in the system
+            gsub("GRUB_CMDLINE_LINUX_DEFAULT=", "");
+            gsub("\"", "");
+
+            cur_opt_cnt = split($0, cur_opt_arr, " ");
+            new_opt_cnt = split(opt, new_opt_arr, " ");
+
+            for (i = 1; i <= new_opt_cnt; i++) {
+                idx = index(new_opt_arr[i], "=");
+                if (idx == 0) {
+                    new_opt_tag[new_opt_arr[i]] = i;
+                }
+                else {
+                    tag = substr(new_opt_arr[i], 0, idx - 1);
+                    new_opt_tag[tag] = i;
+                }
+            }
+
+            # print bracketing variable name
+            printf("GRUB_CMDLINE_LINUX_DEFAULT=\"");
+            
+            for (j = 1; j <= cur_opt_cnt; j++) {
+                cur_tag = "";
+
+                idx = index(cur_opt_arr[j], "=");
+                if (idx == 0) {
+                    cur_tag = cur_opt_arr[j];
+                }
+                else {
+                    cur_tag = substr(cur_opt_arr[j], 0, idx - 1);
+                }
+                
+                if (cur_tag in new_opt_tag) {
+                    printf(new_opt_arr[new_opt_tag[cur_tag]]);
+                    delete new_opt_arr[new_opt_tag[cur_tag]];
+                }
+                else {
+                    printf(cur_opt_arr[j]);
+                }
+
+                printf(" ");
+            }
+
+            # output remaining new options
+            for (new_opt in new_opt_arr) {
+                printf(new_opt_arr[new_opt] " ");
+            }
+
+            # close option string (with newline at the end)
+            print("\"");
             next;
           }
 
