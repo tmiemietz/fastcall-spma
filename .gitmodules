@@ -7,6 +7,9 @@
 [submodule "linux-fccmp"]
 	path = linux-fccmp
 	url = https://github.com/vilaureu/linux
+[submodule "linux-syscall-bench"]
+	path = linux-syscall-bench
+	url = https://github.com/vilaureu/linux
 [submodule "benchmark"]
 	path = benchmark
 	url = https://github.com/google/benchmark

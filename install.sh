@@ -14,70 +14,71 @@
 #
 
 # Path of this script
-SPATH=`dirname $0`
+SPATH="$(realpath `dirname $0`)"
+
+#
+# Build and install kernel
+#
+install_kernel() {
+  echo
+  echo "Building $1 kernel..."
+  echo
+
+  cd "$SPATH/linux-$1"
+  if [ -e .config ]; then
+    echo "Config exists, skipping config creation"
+  else
+	  make defconfig
+  fi
+  make -j `nproc`
+
+  sudo make modules_install
+  sudo make install
+}
 
 #
 # Init repo if not done yet
 #
-echo 
+echo
 echo "Cloning submodules..."
 echo
 
 cd $SPATH
-git submodule update --init --recursive
+git submodule update --init --recursive --depth=1
 
 #
-# Build and install fastcall kernel
+# Build and install kernels
 #
-echo
-echo "Building fastcall kernel..."
-echo 
+install_kernel fastcall
 
-cd $SPATH/linux-fastcall
-make defconfig
-make -j 8
+install_kernel fccmp
 
-sudo make modules_install
-sudo make install
-
-#
-# Build and install fccmp kernel
-#
-echo 
-echo "Building fccmp kernel..."
-echo
-
-cd $SPATH/linux-fccmp
-make defconfig
-make -j 8
-
-sudo make modules_install
-sudo make install
+install_kernel syscall-bench
 
 #
 # Build Google's benchmark library
 #
-echo 
+echo
 echo "Building benchmark library..."
-echo 
+echo
 
 cd $SPATH/benchmark
 mkdir -p $SPATH/benchmark/build
 cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on \
-        -S . -B "build"
-cmake --build "build" --config Release
+      -S . -B "build"
+cmake --build "build" --config Release -j `nproc`
 sudo cmake --build "build" --config Release --target install
 
 
 #
 # Build fastcall benchmarks
 #
-echo 
+echo
 echo "Building fastcall benchmarks..."
-echo 
+echo
 
 cd $SPATH/fastcall-benchmarks
 cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release
-cmake --build build/
+cmake --build build/ -j `nproc`
 
 exit 0
