@@ -50,14 +50,14 @@ process of any component (e.g. due to missing packages or build tools named
 differently on your distribution (e.g. cmake3 instead of cmake) may require 
 you to execute the commands listed in 'install.sh' manually.
 
-Take also care when configuring the fastcall/fastcall-arm64 and fccmp kernels 
-that are needed to run the benchmarks. 'install.sh' will configure them with 
-'make defconfig', which might not be sufficient to create a working kernel 
-image for your machine. If in doubt, execute the installation commands manually,
-configuring the kernel with 'make localmodconfig'. Also take care that all
-required file system and networking drivers are built. For instance, when 
-using a machine  from AWS, make sure that the drivers for Amazon's Elastic 
-Network Adapter are enabled in the respective kernel configurations. 
+Take also care when configuring the fastcall and fccmp kernels that are needed
+to run the benchmarks. 'install.sh' will configure them with 'make defconfig', 
+which might not be sufficient to create a working kernel image for your 
+machine. If in doubt, execute the installation commands manually, configuring 
+the kernel with 'make localmodconfig'. Also take care that all required file 
+system and networking drivers are built. For instance, when using a machine
+from AWS, make sure that the drivers for Amazon's Elastic Network Adapter are 
+enabled in the respective kernel configurations.
 
 
 Running the Benchmarks
@@ -116,11 +116,9 @@ python3 -m plotting
 Hints for Running the Benchmarks on ARM
 =======================================
 
-Kernel Setup: When running on ARM, you have to compile the fastcall-arm64 
-              kernel (subdir linux-fastcall-arm64), instead of the x86-fastcall
-              kernel (subdir linux-fastcall). Regardless of the CPU 
-              architecture, the fccmp kernel (subdir linux-fccmp) must be 
-              always built and installed.
+Kernel Setup: Regardless of the CPU architecture, the fastcall kernel (subdir
+              linux-fastcall) and the fccmp kernel (subdir linux-fccmp) must be
+              built and installed.
 
               Furthermore, the fastcall mechanism is currently not supported
               for ARM kernels with mitigations. In order to build a working

@@ -10,7 +10,3 @@
 [submodule "benchmark"]
 	path = benchmark
 	url = https://github.com/google/benchmark
-[submodule "linux-fastcall-arm64"]
-	path = linux-fastcall-arm64
-	url = https://github.com/vilaureu/linux
-	branch = fastcall-arm64
