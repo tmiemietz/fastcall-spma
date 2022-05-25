@@ -15,7 +15,10 @@
 
 CMD=""                                  # Action to be executed 
 VERSION=""                              # Stores kernel version to apply
-OPTIONS=""                              # Options for starting the kernel
+DELOPTS=""                              # Options to delete if not specified in
+                                        # $SETOPTS
+SETOPTS=""                              # New options for starting the kernel
+
 
 ################################################################################
 #                                                                              #
@@ -36,13 +39,16 @@ usage () {
   echo "        Options: none"
   echo
   echo "set  -  Sets the kernel that shall be used upon next system restart."
-  echo "        If --options is given, this must be the last option since the "
+  echo "        If --setopts is given, this must be the last option since the "
   echo "        entire following command line will be taken verbatim as a "
   echo "        string of multiple kernel parameters that will be injected "
   echo "        into the booting config. The script will try to preserve the "
-  echo "        existing kernel options, only overriding / adding those "
-  echo "        specified by the options string."
-  echo "        Options: --version , --options (optional)"
+  echo "        existing kernel options, only changing those "
+  echo "        specified by the option strings. The --delopts option must be"
+  echo "        followed by a comma-separated list of kernel option names that"
+  echo "        should be removed from the kernel command line if not included"
+  echo "        in the option names passed to --setopts."
+  echo "        Options: --version , --delopts (optional), --setopts (optional)"
   echo
   echo "help -  Outputs this help and exits."
   echo "        Options: none"
@@ -50,7 +56,17 @@ usage () {
   echo "Options:"
   echo "============================================"
   echo
-  echo "--options - A comma-separated list of kernel options that should be"
+  echo "--delopts - A comma-separated list of kernel options that should be"
+  echo "            removed from the kernel's command line parameters. If"
+  echo "            the respective option name is included in the option"
+  echo "            string of --setopts as well, the option will be replaced"
+  echo "            with the value specified in --setopts instead of removing"
+  echo "            it. Also note the the list of --delopts must only contain"
+  echo "            the option *names*, not any values assigned to it. E.g."
+  echo "            if your kernel config contains the option mitigations=auto"
+  echo "            and you want to remove it, just specify "
+  echo "            --delopts mitigations"
+  echo "--setopts - A comma-separated list of kernel options that should be"
   echo "            applied upon next system reboot."
   echo "            Compatible commands: set"
   echo
@@ -128,7 +144,8 @@ set_kernel () {
 
   # update default boot entry, disable silent booting, and set kernel options 
   typeset grubconf=`cat /etc/default/grub | \
-                    awk -v krn="$kernid" -v men="$menuid" -v opt="$OPTIONS" '
+                    awk -v krn="$kernid" -v men="$menuid" -v opt="$SETOPTS" \
+                        -v delopt="$DELOPTS" '
      
      # catch default boot entry
      /^GRUB_DEFAULT=.*$/ { print("GRUB_DEFAULT=\"" men ">" krn "\""); 
@@ -143,6 +160,13 @@ set_kernel () {
 
             cur_opt_cnt = split($0, cur_opt_arr, " ");
             new_opt_cnt = split(opt, new_opt_arr, " ");
+            del_opt_cnt = split(delopt, del_opt_arr, ",");
+
+            # transform del_opt_arr into a list of del_opt tags for easier 
+            # search for existence of array members
+            for (idx in del_opt_arr) {
+                del_opt_tags[del_opt_arr[idx]] = "";
+            }
 
             for (i = 1; i <= new_opt_cnt; i++) {
                 idx = index(new_opt_arr[i], "=");
@@ -174,7 +198,14 @@ set_kernel () {
                     delete new_opt_arr[new_opt_tag[cur_tag]];
                 }
                 else {
-                    printf(cur_opt_arr[j]);
+                    # skip options that should be deleted and are not in the
+                    # list of new / modified options
+                    if (cur_tag in del_opt_tags) {
+                        continue;
+                    }
+                    else {
+                        printf(cur_opt_arr[j]);
+                    }
                 }
 
                 printf(" ");
@@ -198,6 +229,13 @@ set_kernel () {
 
             cur_opt_cnt = split($0, cur_opt_arr, " ");
             new_opt_cnt = split(opt, new_opt_arr, " ");
+            del_opt_cnt = split(delopt, del_opt_arr, ",");
+
+            # transform del_opt_arr into a list of del_opt tags for easier 
+            # search for existence of array members
+            for (idx in del_opt_arr) {
+                del_opt_tags[del_opt_arr[idx]] = "";
+            }
 
             for (i = 1; i <= new_opt_cnt; i++) {
                 idx = index(new_opt_arr[i], "=");
@@ -229,7 +267,14 @@ set_kernel () {
                     delete new_opt_arr[new_opt_tag[cur_tag]];
                 }
                 else {
-                    printf(cur_opt_arr[j]);
+                    # skip options that should be deleted and are not in the
+                    # list of new / modified options
+                    if (cur_tag in del_opt_tags) {
+                        continue;
+                    }
+                    else {
+                        printf(cur_opt_arr[j]);
+                    }
                 }
 
                 printf(" ");
@@ -312,7 +357,7 @@ shift 1
 while [ $# -gt 0 ]
   do
   case "$1" in
-    "--options")
+    "--delopts")
       # make sure that a kernel version has been specified *before* the
       # kernel options
       if [ -z "$VERSION" ]
@@ -326,7 +371,31 @@ while [ $# -gt 0 ]
       # no empty optarg allowed
       if [ $# -lt 2 ]
         then
-        echo "ERROR: --options expects list with kernel options!"
+        echo "ERROR: --delopts expects list with kernel options!"
+        echo
+        usage
+        exit 1
+      fi
+
+      # take second arg as comma-separated list of option names to remove from
+      # the kernel command line if not specified lateron via --setopts
+      DELOPTS="$2"
+      shift 2;;
+    "--setopts")
+      # make sure that a kernel version has been specified *before* the
+      # kernel options
+      if [ -z "$VERSION" ]
+        then
+        echo "ERROR: Specify kernel version before options!"
+        echo
+        usage
+        exit 1
+      fi
+
+      # no empty optarg allowed
+      if [ $# -lt 2 ]
+        then
+        echo "ERROR: --setopts expects list with kernel options!"
         echo
         usage
         exit 1
@@ -335,7 +404,7 @@ while [ $# -gt 0 ]
       shift 1
     
       # take entire remaining command line as booting options
-      OPTIONS="$@"
+      SETOPTS="$@"
       break;;
     "--version")
       if [ $# -lt 2 ]
@@ -356,7 +425,6 @@ while [ $# -gt 0 ]
       exit 1;;
   esac
 done
-
 
 # Branch depending on command
 case "$CMD" in 
