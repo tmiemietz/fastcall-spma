@@ -27,7 +27,7 @@ MITI_ARM="mitigations=off"
 
 # list of mitigation options to iterate over, set automatically
 MITIS=""
-# list of kernel option *names* potentially affected by mitigation settings 
+# list of kernel option *names* potentially affected by mitigation settings
 # (intersecting set)
 KOPTS=""
 
@@ -148,7 +148,7 @@ check_kernel () {
       then
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
       echo "./load_kernel.sh set --version $nkernv --delopts "$KOPTS" --setopts $opts"
       exit 2
     fi
@@ -162,7 +162,7 @@ check_kernel () {
       then
       echo "ERROR: Wrong kernel version!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
       echo "./load_kernel.sh set --version $nkernv --delopts "$KOPTS" --setopts $opts"
       exit 2
     fi
@@ -189,7 +189,7 @@ check_kernel () {
       then
       echo "ERROR: Kernel mitigation options are incorrect for the benchmark!"
       echo "Run the following command, reboot and continue execution: "
-      echo 
+      echo
       echo "./load_kernel.sh set --version $nkernv --delotps "$KOPTS" --setopts $opts"
       exit 2
     fi
