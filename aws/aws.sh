@@ -12,6 +12,16 @@ umask 077
 : "${CIDR:=10.13.37.0/24}"
 : "${INGRESS:=0.0.0.0/0}"
 
+check_var() {
+	if [[ "${!1}" == *" "* ]]; then
+		echo "$1 must not contain spaces"
+		exit 1
+	fi
+}
+
+check_var PROFILE
+check_var REGION
+
 KEY_NAME="fastcall-key-$NONCE"
 SECURITY_NAME="fastcall-security-group-$NONCE"
 OUTPUT="--output json"
@@ -38,7 +48,7 @@ finish() {
       &>/dev/null
 	fi
 
-	$AWS delete-key-pair --key-name $KEY_NAME &>/dev/null
+	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
 
 	if [[ -n ${SECURITY_ID-} ]]; then
 		$AWS delete-security-group \
