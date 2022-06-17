@@ -89,28 +89,11 @@ check_dependencies() {
 }
 
 create_instance() {
-	echo "creating VPC ..."
-	OUTPUT="$(
-		$AWS create-vpc --cidr-block "$CIDR"
-	)"
-	VPC_ID="$($JQ .Vpc.VpcId <<<"$OUTPUT")"
-	echo "VPC $VPC_ID created"
-
-	echo "creating subnet ..."
-	OUTPUT="$(
-		$AWS create-subnet \
-			--vpc-id "$VPC_ID" \
-			--cidr-block "$CIDR"
-	)"
-	SUBNET_ID="$($JQ .Subnet.SubnetId <<<"$OUTPUT")"
-	echo "subnet $SUBNET_ID created"
-
 	echo "creating security group ..."
 	OUTPUT="$(
 		$AWS create-security-group \
 			--group-name "$SECURITY_NAME" \
 			--description "fastcall security group" \
-			--vpc-id "$VPC_ID"
 	)"
 	SECURITY_ID="$($JQ .GroupId <<<"$OUTPUT")"
 	$AWS authorize-security-group-ingress \
@@ -133,8 +116,7 @@ create_instance() {
 			--image-id "$AMI_ID" \
 			--instance-type "$INSTANCE_TYPE" \
 			--key-name "$KEY_NAME" \
-      --subnet-id "$SUBNET_ID" \
-	    --security-group-ids "$SECURITY_ID" \
+	        --security-group-ids "$SECURITY_ID" \
 			--associate-public-ip-address \
 			--block-device-mappings "DeviceName=/dev/xvda,Ebs={VolumeSize=$VOLUME_SIZE}"
 	)"
