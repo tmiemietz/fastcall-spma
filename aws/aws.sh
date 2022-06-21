@@ -55,16 +55,6 @@ finish() {
 			--group-id "$SECURITY_ID"
 	fi
 
-	if [[ -n ${SUBNET_ID-} ]]; then
-		$AWS delete-subnet \
-			--subnet-id "$SUBNET_ID"
-	fi
-
-	if [[ -n ${VPC_ID-} ]]; then
-		$AWS delete-vpc \
-			--vpc-id "$VPC_ID"
-	fi
-
 	rm --recursive --force "$TMP_DIR"
 }
 trap finish EXIT
