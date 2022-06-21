@@ -43,9 +43,9 @@ finish() {
 		$AWS terminate-instances \
 			--instance-ids "$INSTANCE_ID" \
 			&>/dev/null
-    $AWS wait instance-terminated \
-      --instance-ids "$INSTANCE_ID" \
-      &>/dev/null
+		$AWS wait instance-terminated \
+			--instance-ids "$INSTANCE_ID" \
+			&>/dev/null
 	fi
 
 	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
@@ -83,7 +83,7 @@ create_instance() {
 	OUTPUT="$(
 		$AWS create-security-group \
 			--group-name "$SECURITY_NAME" \
-			--description "fastcall security group" \
+			--description "fastcall security group"
 	)"
 	SECURITY_ID="$($JQ .GroupId <<<"$OUTPUT")"
 	$AWS authorize-security-group-ingress \
@@ -106,7 +106,7 @@ create_instance() {
 			--image-id "$AMI_ID" \
 			--instance-type "$INSTANCE_TYPE" \
 			--key-name "$KEY_NAME" \
-	        --security-group-ids "$SECURITY_ID" \
+			--security-group-ids "$SECURITY_ID" \
 			--associate-public-ip-address \
 			--block-device-mappings "DeviceName=/dev/xvda,Ebs={VolumeSize=$VOLUME_SIZE}"
 	)"
