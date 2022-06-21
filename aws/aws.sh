@@ -3,14 +3,14 @@
 set -euo pipefail
 umask 077
 
-: "${REGION:=eu-central-1}"
-: "${PROFILE:=}"
-: "${NONCE:="$(tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8)"}"
-: "${AMI_ID:=ami-0a5b5c0ea66ec560d}"
-: "${INSTANCE_TYPE:=t2.micro}"
-: "${VOLUME_SIZE:=20}"
-: "${CIDR:=10.13.37.0/24}"
-: "${INGRESS:=0.0.0.0/0}"
+REGION="${REGION:-eu-central-1}"
+PROFILE="${PROFILE:-}"
+NONCE="${NONCE:-$(tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8)}"
+AMI_ID="${AMI_ID:-ami-0a5b5c0ea66ec560d}"
+INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}"
+VOLUME_SIZE="${VOLUME_SIZE:-20}"
+CIDR="${CIDR:-10.13.37.0/24}"
+INGRESS="${INGRESS:-0.0.0.0/0}"
 
 check_var() {
 	if [[ "${!1}" == *" "* ]]; then
@@ -120,9 +120,9 @@ create_instance() {
 	)"
 	IP_ADDR="$($JQ .Reservations[0].Instances[0].PublicIpAddress <<<"$OUTPUT")"
 	echo "instance came up with address $IP_ADDR"
-
-	read -p "Press Enter to teardown instance"
 }
 
 check_dependencies
 create_instance
+
+read -p "Press Enter to tear instance down"
