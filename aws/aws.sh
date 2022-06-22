@@ -5,12 +5,18 @@ umask 077
 
 REGION="${REGION:-eu-central-1}"
 PROFILE="${PROFILE:-}"
-NONCE="${NONCE:-$(tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8)}"
+NONCE="${NONCE:-$(
+	set +o pipefail
+	tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8
+)}"
 AMI_ID="${AMI_ID:-ami-0a5b5c0ea66ec560d}"
 INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}"
 VOLUME_SIZE="${VOLUME_SIZE:-20}"
 CIDR="${CIDR:-10.13.37.0/24}"
 INGRESS="${INGRESS:-0.0.0.0/0}"
+SSH_USER="${SSH_USER:-admin}"
+GIT_CHECKOUT="${GIT_CHECKOUT:-master}"
+UPLOAD_CHANGES="${UPLOAD_CHANGES:-}"
 
 check_var() {
 	if [[ "${!1}" == *" "* ]]; then
@@ -21,12 +27,17 @@ check_var() {
 
 check_var PROFILE
 check_var REGION
+check_var SSH_USER
+check_var GIT_CHECKOUT
 
+SPATH="$(realpath "$(dirname $0)")"
 KEY_NAME="fastcall-key-$NONCE"
 SECURITY_NAME="fastcall-security-group-$NONCE"
 OUTPUT="--output json"
 REGION="--region $REGION"
 JQ="jq --raw-output --exit-status"
+SSH_OPT="-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null \
+-o LogLevel=ERROR"
 
 if [[ -n "${PROFILE}" ]]; then
 	PROFILE="--profile $PROFILE"
@@ -39,10 +50,13 @@ AWS="aws ec2 $OUTPUT $REGION $PROFILE"
 finish() {
 	set +e
 
+	read -p "Press Enter to tear instance down"
+
 	if [[ -n "${INSTANCE_ID-}" ]]; then
 		$AWS terminate-instances \
 			--instance-ids "$INSTANCE_ID" \
 			&>/dev/null
+		echo "waiting for instance to terminate..."
 		$AWS wait instance-terminated \
 			--instance-ids "$INSTANCE_ID" \
 			&>/dev/null
@@ -72,8 +86,29 @@ check_dependencies() {
 	if ! jq --version &>/dev/null; then
 		echo "jq must be installed."
 		echo "  Debian: apt install jq"
-		echo "  Arch Linux: apt install jq"
+		echo "  Arch Linux: pacman -S jq"
 		echo "  Website: https://stedolan.github.io/jq/"
+		exit 1
+	fi
+
+	if ! git --version &>/dev/null; then
+		echo "git must be installed."
+		echo "  Debian: apt install git"
+		echo "  Arch Linux: pacman -S git"
+		exit 1
+	fi
+
+	# if ! tar --version &>/dev/null; then
+	# 	echo "tar must be installed."
+	# 	echo "  Debian: apt install tar"
+	# 	echo "  Arch Linux: pacman -S tar"
+	# 	exit 1
+	# fi
+
+	if ! ssh -V &>/dev/null; then
+		echo "ssh must be installed."
+		echo "  Debian: apt install ssh"
+		echo "  Arch Linux: pacman -S openssh"
 		exit 1
 	fi
 }
@@ -120,9 +155,58 @@ create_instance() {
 	)"
 	IP_ADDR="$($JQ .Reservations[0].Instances[0].PublicIpAddress <<<"$OUTPUT")"
 	echo "instance came up with address $IP_ADDR"
+
+	check_var IP_ADDR
+	SSH="ssh $SSH_OPT -i $IDENTITY $SSH_USER@$IP_ADDR"
+
+	echo "waiting for SSH server to come up..."
+	until $SSH true; do
+		sleep 5
+	done
+	echo "SSH working"
 }
+
+prepare() {
+	echo "preparing instance for bulding..."
+	cat "$SPATH/prepare.sh" | $SSH "export GIT_CHECKOUT=$GIT_CHECKOUT; bash"
+	echo "instance prepared"
+
+	# This requires all necassary files to be tracked by Git!
+	if [[ -n "$UPLOAD_CHANGES" ]]; then
+		echo "uploading local changes..."
+		cd "$SPATH/.."
+		OUTPUT="$(
+			git diff "$GIT_CHECKOUT" --
+		)"
+		if [[ -n "$OUTPUT" ]]; then
+			echo "$OUTPUT" | $SSH "cd fastcall-spma; git apply"
+			$SSH "cd fastcall-spma; git add --all"
+		fi
+		cd - >/dev/null
+		echo "changes uploaded"
+	fi
+
+	echo "building and installing..."
+	$SSH fastcall-spma/install.sh
+	echo "instance ready for benchmarking"
+}
+
+# Alternative prepare() variant:
+#
+# prepare() {
+# 	echo "uploading local repo..."
+# 	cd "$TMP_DIR"
+# 	git clone "$(realpath "$SPATH/..")/.git"
+# 	ssh "$SSH_ADDR" mkdir fastcall-spma
+# 	tar cz . | ssh "$SSH_ADDR" tar xzC fastcall-spma
+# 	cd - >/dev/null
+# 	echo "repository uploaded"
+
+# 	echo "preparing instance for benchmarks..."
+# 	ssh "$SSH_ADDR" ./fastcall-spma/aws/prepare.sh
+# 	echo "instance prepared"
+# }
 
 check_dependencies
 create_instance
-
-read -p "Press Enter to tear instance down"
+prepare

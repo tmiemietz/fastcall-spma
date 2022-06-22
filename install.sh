@@ -27,8 +27,12 @@ install_kernel() {
   cd "$SPATH/linux-$1"
   if [ -e .config ]; then
     echo "Config exists, skipping config creation"
+  elif [ -e /proc/config.gz ]; then
+    zcat /proc/config.gz > .config
+    make olddefconfig
+    make localmodconfig
   else
-	  make defconfig
+    make defconfig
   fi
   make -j `nproc`
 
