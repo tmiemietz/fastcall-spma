@@ -190,7 +190,7 @@ check_kernel () {
       echo "ERROR: Kernel mitigation options are incorrect for the benchmark!"
       echo "Run the following command, reboot and continue execution: "
       echo
-      echo "./load_kernel.sh set --version $nkernv --delotps "$KOPTS" --setopts $opts"
+      echo "./load_kernel.sh set --version $nkernv --delopts "$KOPTS" --setopts $opts"
       exit 2
     fi
   done

@@ -27,12 +27,23 @@ install_kernel() {
   cd "$SPATH/linux-$1"
   if [ -e .config ]; then
     echo "Config exists, skipping config creation"
-  elif [ -e /proc/config.gz ]; then
-    zcat /proc/config.gz > .config
-    make olddefconfig
-    make localmodconfig
   else
-    make defconfig
+    if [ -e /proc/config.gz ]; then
+      echo "Using /proc/config.gz as .config"
+      zcat /proc/config.gz > .config
+      make olddefconfig
+    elif OUTPUT="$(ls /boot/config-*-cloud-amd64 2>/dev/null)"; then
+      # This finds the latest kernel config at least on AWS.
+      OUTPUT="$(echo "$OUTPUT" | sort | tail --lines=1)"
+      echo "Using $OUTPUT as .config"
+      cp "$OUTPUT" .config
+      # CONFIG_DEBUG_INFO_BTF must not be set on low-memory AWS instances.
+      sed -i 's/CONFIG_DEBUG_INFO_BTF=y/# CONFIG_DEBUG_INFO_BTF is not set/g' .config
+      make olddefconfig
+    else
+      make defconfig
+    fi
+    make localmodconfig
   fi
   make -j `nproc`
 

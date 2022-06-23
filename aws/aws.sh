@@ -10,7 +10,7 @@ NONCE="${NONCE:-$(
 	tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8
 )}"
 AMI_ID="${AMI_ID:-ami-0a5b5c0ea66ec560d}"
-INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}"
+INSTANCE_TYPE="${INSTANCE_TYPE:-t3.micro}"
 VOLUME_SIZE="${VOLUME_SIZE:-20}"
 CIDR="${CIDR:-10.13.37.0/24}"
 INGRESS="${INGRESS:-0.0.0.0/0}"
@@ -113,6 +113,14 @@ check_dependencies() {
 	fi
 }
 
+wait_ssh() {
+	echo "waiting for SSH server to come up..."
+	until $SSH true; do
+		sleep 5
+	done
+	echo "SSH working"
+}
+
 create_instance() {
 	echo "creating security group ..."
 	OUTPUT="$(
@@ -159,11 +167,7 @@ create_instance() {
 	check_var IP_ADDR
 	SSH="ssh $SSH_OPT -i $IDENTITY $SSH_USER@$IP_ADDR"
 
-	echo "waiting for SSH server to come up..."
-	until $SSH true; do
-		sleep 5
-	done
-	echo "SSH working"
+	wait_ssh
 }
 
 prepare() {
@@ -171,7 +175,7 @@ prepare() {
 	cat "$SPATH/prepare.sh" | $SSH "export GIT_CHECKOUT=$GIT_CHECKOUT; bash"
 	echo "instance prepared"
 
-	# This requires all necassary files to be tracked by Git!
+	# This requires all necessary files to be tracked by Git!
 	if [[ -n "$UPLOAD_CHANGES" ]]; then
 		echo "uploading local changes..."
 		cd "$SPATH/.."
@@ -180,7 +184,7 @@ prepare() {
 		)"
 		if [[ -n "$OUTPUT" ]]; then
 			echo "$OUTPUT" | $SSH "cd fastcall-spma; git apply"
-			$SSH "cd fastcall-spma; git add --all"
+			$SSH "cd fastcall-spma; git add --all; git commit --message 'local changes'"
 		fi
 		cd - >/dev/null
 		echo "changes uploaded"
@@ -207,6 +211,36 @@ prepare() {
 # 	echo "instance prepared"
 # }
 
+benchmark() {
+	while :; do
+		RET=0
+		$SSH "cd fastcall-spma; ./aws/benchmark.sh" || RET=$?
+		if [[ "$RET" -eq 0 ]]; then
+			return
+		elif [[ "$RET" -ne 1 ]]; then
+			exit "$RET"
+		fi
+
+		echo "rebooting instance..."
+		$AWS reboot-instances --instance-ids "$INSTANCE_ID"
+		# Wait for instance to start rebooting
+		sleep 5
+		$AWS wait instance-running --instance-ids "$INSTANCE_ID"
+		echo "instance came back up"
+		wait_ssh
+	done
+}
+
+retrieve_data() {
+	echo "retrieving benchmark results"
+	cd "$SPATH/.."
+	$SSH "cd fastcall-spma; git add --all; git diff --staged" | git apply
+	cd - >/dev/null
+	echo "benchmark results applied to local repository"
+}
+
 check_dependencies
 create_instance
 prepare
+benchmark
+retrieve_data

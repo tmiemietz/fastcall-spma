@@ -356,7 +356,8 @@ shift 1
 # Parse remaining options
 while [ $# -gt 0 ]
   do
-  case "$1" in
+  OPT="$1"
+  case "$OPT" in
     "--delopts")
       # make sure that a kernel version has been specified *before* the
       # kernel options
@@ -418,7 +419,7 @@ while [ $# -gt 0 ]
       VERSION="$2"
       shift 2;;
     *)
-      echo "ERROR: Unknown option \"$CMD\". Aborting..."
+      echo "ERROR: Unknown option \"$OPT\". Aborting..."
       echo
 
       usage
