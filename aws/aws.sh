@@ -47,35 +47,6 @@ fi
 
 AWS="aws ec2 $OUTPUT $REGION $PROFILE"
 
-finish() {
-	set +e
-
-	read -p "Press Enter to tear instance down"
-
-	if [[ -n "${INSTANCE_ID-}" ]]; then
-		$AWS terminate-instances \
-			--instance-ids "$INSTANCE_ID" \
-			&>/dev/null
-		echo "waiting for instance to terminate..."
-		$AWS wait instance-terminated \
-			--instance-ids "$INSTANCE_ID" \
-			&>/dev/null
-	fi
-
-	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
-
-	if [[ -n ${SECURITY_ID-} ]]; then
-		$AWS delete-security-group \
-			--group-id "$SECURITY_ID"
-	fi
-
-	rm --recursive --force "$TMP_DIR"
-}
-trap finish EXIT
-
-TMP_DIR="$(mktemp --directory --suffix .fastcall)"
-IDENTITY="$TMP_DIR/id"
-
 check_dependencies() {
 	if ! (aws --version 2>/dev/null | grep -E '^aws-cli/2' &>/dev/null); then
 		echo "AWS CLI (aws) version 2 must be installed."
@@ -111,6 +82,31 @@ check_dependencies() {
 		echo "  Arch Linux: pacman -S openssh"
 		exit 1
 	fi
+}
+
+finish() {
+	set +e
+
+	read -p "Press Enter to tear instance down"
+
+	if [[ -n "${INSTANCE_ID-}" ]]; then
+		$AWS terminate-instances \
+			--instance-ids "$INSTANCE_ID" \
+			&>/dev/null
+		echo "waiting for instance to terminate..."
+		$AWS wait instance-terminated \
+			--instance-ids "$INSTANCE_ID" \
+			&>/dev/null
+	fi
+
+	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
+
+	if [[ -n ${SECURITY_ID-} ]]; then
+		$AWS delete-security-group \
+			--group-id "$SECURITY_ID"
+	fi
+
+	rm --recursive --force "$TMP_DIR"
 }
 
 wait_ssh() {
@@ -240,6 +236,12 @@ retrieve_data() {
 }
 
 check_dependencies
+
+trap finish EXIT
+
+TMP_DIR="$(mktemp --directory --suffix .fastcall)"
+IDENTITY="$TMP_DIR/id"
+
 create_instance
 prepare
 benchmark
