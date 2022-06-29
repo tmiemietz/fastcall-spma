@@ -142,6 +142,7 @@ def plot_misc(results: Results):
 
     for i, cpu in enumerate(results.cpus):
         cpu_dir = path.join(PLOTS_DIR, cpu)
+        makedirs(cpu_dir, exist_ok=True)
         plot_cpu(cpu_dir, results.array[i])
 
 
