@@ -4,7 +4,7 @@ import csv
 from os import makedirs, path, scandir
 import numpy as np
 from matplotlib import pyplot as plt
-from .utils import Results, RESULTS_DIR, PLOTS_DIR, PLOT_EXT, COLORS
+from .utils import Results, RESULTS_DIR, PLOTS_DIR, PLOT_EXT, COLORS, PLOTTED_CPUS
 
 MITIGATIONS = {"mitigations=auto": "default mitigations",
                "mitigations=off": "no mitigations"}
@@ -57,6 +57,8 @@ def read_misc():
     with scandir(RESULTS_DIR) as it:
         for entry in it:
             if not entry.is_dir():
+                continue
+            if entry.name not in PLOTTED_CPUS:
                 continue
 
             array = read_cpu(entry.path)
