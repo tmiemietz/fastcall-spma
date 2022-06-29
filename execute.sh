@@ -32,7 +32,8 @@ MITIS=""
 KOPTS=""
 
 # list of microbenchmarks to run
-BENCHS="fastcall syscall ioctl vdso"
+BENCHS_fastcall="fastcall"
+BENCHS_fccmp="syscall ioctl vdso"
 
 ################################################################################
 #                                                                              #
@@ -280,36 +281,45 @@ do_run_micro () {
     # create results directory
     mkdir -p ${SPATH}/results/${CPUID}/${miti}
 
-    for bench in $BENCHS
+    for ktype in "fastcall" "fccmp"
       do
-      echo "Running benchmark $bench for kernel config ${miti}..."
 
-      # check if benchmark was already conducted
-      if [ -f ${SPATH}/results/${CPUID}/${miti}/${bench}.csv ]
-        then
-        echo "Benchmark results already present. Skipping..."
-        continue
-      fi
+      benchs="BENCHS_$ktype"
+      for bench in ${!benchs}
+        do
+        echo "Running benchmark $bench for kernel config ${miti}..."
 
-      # check if kernel config fits the next benchmark
-      check_kernel "$miti" "$bench"
+        # check if benchmark was already conducted
+        if [ -f ${SPATH}/results/${CPUID}/${miti}/${bench}.csv ]
+          then
+          echo "Benchmark results already present. Skipping..."
+          continue
+        fi
 
-      csv=`${SPATH}/fastcall-benchmarks/build/benchmark/fastcall-benchmark \
-           --benchmark_filter=${bench} --benchmark_format=csv \
-           2>${SPATH}/results/${CPUID}/${miti}/${bench}.out`
+        # check if kernel config fits the next benchmark
+        check_kernel "$miti" "$ktype"
 
-      if [ $? -ne 0 ]
-        then
-        echo "Benchmark $bench failed. See output below: "
-        echo
-        cat ${SPATH}/results/${CPUID}/${miti}/${bench}.out
-        continue
-      fi
+        csv=`${SPATH}/fastcall-benchmarks/build/benchmark/fastcall-benchmark \
+            --benchmark_filter=${bench} --benchmark_format=csv \
+            2>${SPATH}/results/${CPUID}/${miti}/${bench}.out`
 
-      # benchmark successful, store plain csv
-      echo "$csv" > ${SPATH}/results/${CPUID}/${miti}/${bench}.csv
+        # if benchmarks fail, the exit code is still 0 but the "error_occurred"
+        # column contains a true
+        if [ $? -ne 0 ] || [[ "$csv" == *",,,,,,,,true,"* ]]
+          then
+          # stderr might not contain the error, so append stdout to the log
+          echo "$csv" >> ${SPATH}/results/${CPUID}/${miti}/${bench}.out
+          echo "Benchmark $bench failed. See output below: "
+          echo
+          cat ${SPATH}/results/${CPUID}/${miti}/${bench}.out
+          continue
+        fi
 
-      echo "Done."
+        # benchmark successful, store plain csv
+        echo "$csv" > ${SPATH}/results/${CPUID}/${miti}/${bench}.csv
+
+        echo "Done."
+      done
     done
   done
 }
