@@ -171,3 +171,4 @@ def plot_cpu(cpu_dir, results):
 
     plot_file = path.join(cpu_dir, PLOT_NAME + PLOT_EXT)
     fig.savefig(plot_file, bbox_inches="tight")
+    plt.close()

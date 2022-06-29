@@ -117,6 +117,7 @@ def plot_scenario(plot_file, y_label, results):
               bbox_to_anchor=(0.5, 1.05))
     fig.tight_layout()
     fig.savefig(plot_file, bbox_inches="tight")
+    plt.close()
 
 
 def draw_arrow(ax, x, results):

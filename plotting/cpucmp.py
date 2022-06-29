@@ -77,6 +77,7 @@ def plot_scenario(title, results):
     fname = fname.replace(" ", "-")
     plot_file = path.join(PLOTS_DIR, fname)
     fig.savefig(plot_file, bbox_inches="tight")
+    plt.close()
 
 
 def plot_cpu(ax, cpu, results, first):
