@@ -69,13 +69,6 @@ check_dependencies() {
 		exit 1
 	fi
 
-	# if ! tar --version &>/dev/null; then
-	# 	echo "tar must be installed."
-	# 	echo "  Debian: apt install tar"
-	# 	echo "  Arch Linux: pacman -S tar"
-	# 	exit 1
-	# fi
-
 	if ! ssh -V &>/dev/null; then
 		echo "ssh must be installed."
 		echo "  Debian: apt install ssh"
@@ -190,22 +183,6 @@ prepare() {
 	$SSH fastcall-spma/install.sh
 	echo "instance ready for benchmarking"
 }
-
-# Alternative prepare() variant:
-#
-# prepare() {
-# 	echo "uploading local repo..."
-# 	cd "$TMP_DIR"
-# 	git clone "$(realpath "$SPATH/..")/.git"
-# 	ssh "$SSH_ADDR" mkdir fastcall-spma
-# 	tar cz . | ssh "$SSH_ADDR" tar xzC fastcall-spma
-# 	cd - >/dev/null
-# 	echo "repository uploaded"
-
-# 	echo "preparing instance for benchmarks..."
-# 	ssh "$SSH_ADDR" ./fastcall-spma/aws/prepare.sh
-# 	echo "instance prepared"
-# }
 
 benchmark() {
 	while :; do
