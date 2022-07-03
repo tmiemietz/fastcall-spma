@@ -1,7 +1,10 @@
 #!/bin/bash
 
+# Prepare the instance by installing packages and cloning this repository.
+
 set -euo pipefail
 
+# Install the required packages. Designed for Debian Bullseye.
 install_packages() {
 	sudo apt-get update
 	sudo apt-get install --yes \
@@ -9,6 +12,7 @@ install_packages() {
 		g++ libboost-dev libboost-program-options1.74-dev
 }
 
+# Clone this repository at the specified commit/branch.
 clone() {
 	git init fastcall-spma
 	cd fastcall-spma

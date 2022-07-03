@@ -1,23 +1,43 @@
 #!/bin/bash
 
+# This script automatically executes the benchmarks on AWS EC2 instance(s) and
+# downloads the created results.
+# Please make sure that you have the aws-cli version 2 installed and configured.
+# This will incur costs in your AWS account.
+#
+# Usage: ./aws.sh
+
 set -euo pipefail
 umask 077
 
+# AWS region where the instance(s) should be started.
 REGION="${REGION:-eu-central-1}"
+# Optional aws-cli profile.
 PROFILE="${PROFILE:-}"
+# Used for creating unique names in AWS.
 NONCE="${NONCE:-$(
 	set +o pipefail
 	tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8
 )}"
+# The disk image to use. The script is designed for Debian Bullseye.
+# Please make sure that the AMI is available in the specified region.
 AMI_ID="${AMI_ID:-ami-0a5b5c0ea66ec560d}"
+# Instance type for EC2.
+# Please select an instance type which supports hardware performance counters.
 INSTANCE_TYPE="${INSTANCE_TYPE:-t3.micro}"
+# Available storage space.
 VOLUME_SIZE="${VOLUME_SIZE:-20}"
-CIDR="${CIDR:-10.13.37.0/24}"
+# Allow incoming SSH traffic from following IP range to the created instance(s).
 INGRESS="${INGRESS:-0.0.0.0/0}"
+# User name of the default user for use with SSH. This is AMI-specific.
 SSH_USER="${SSH_USER:-admin}"
+# The branch/commit of this repository which will be cloned onto the
+# instance(s).
 GIT_CHECKOUT="${GIT_CHECKOUT:-master}"
+# Upload all changes between GIT_CHECKOUT and HEAD to the instance(s)?
 UPLOAD_CHANGES="${UPLOAD_CHANGES:-}"
 
+# Assert that the (by-name) given variable does not contain spaces.
 check_var() {
 	if [[ "${!1}" == *" "* ]]; then
 		echo "$1 must not contain spaces"
@@ -31,11 +51,14 @@ check_var SSH_USER
 check_var GIT_CHECKOUT
 
 SPATH="$(realpath "$(dirname $0)")"
+# Name for the AWS SSH key.
 KEY_NAME="fastcall-key-$NONCE"
+# Name for the security group.
 SECURITY_NAME="fastcall-security-group-$NONCE"
 OUTPUT="--output json"
 REGION="--region $REGION"
 JQ="jq --raw-output --exit-status"
+# We do not want to pollute the known_hosts file.
 SSH_OPT="-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null \
 -o LogLevel=ERROR"
 
@@ -47,6 +70,7 @@ fi
 
 AWS="aws ec2 $OUTPUT $REGION $PROFILE"
 
+# Assert that all required programs are installed.
 check_dependencies() {
 	if ! (aws --version 2>/dev/null | grep -E '^aws-cli/2' &>/dev/null); then
 		echo "AWS CLI (aws) version 2 must be installed."
@@ -77,11 +101,15 @@ check_dependencies() {
 	fi
 }
 
+# Cleanup routine to delete created AWS resources.
 finish() {
 	set +e
 
+	# Give the user a chance to manually connect to the instance(s) before
+	# cleanup.
 	read -p "Press Enter to tear instance down"
 
+	# Terminate instance.
 	if [[ -n "${INSTANCE_ID-}" ]]; then
 		$AWS terminate-instances \
 			--instance-ids "$INSTANCE_ID" \
@@ -92,16 +120,20 @@ finish() {
 			&>/dev/null
 	fi
 
+	# Delete key pair.
 	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
 
+	# Delete security group.
 	if [[ -n ${SECURITY_ID-} ]]; then
 		$AWS delete-security-group \
 			--group-id "$SECURITY_ID"
 	fi
 
+	# Delete temporary directory.
 	rm --recursive --force "$TMP_DIR"
 }
 
+# Helper function to wait for SSH connectivity.
 wait_ssh() {
 	echo "waiting for SSH server to come up..."
 	until $SSH true; do
@@ -110,6 +142,7 @@ wait_ssh() {
 	echo "SSH working"
 }
 
+# Create a new AWS instance.
 create_instance() {
 	echo "creating security group ..."
 	OUTPUT="$(
@@ -154,13 +187,16 @@ create_instance() {
 	echo "instance came up with address $IP_ADDR"
 
 	check_var IP_ADDR
+	# Assemble SSH command.
 	SSH="ssh $SSH_OPT -i $IDENTITY $SSH_USER@$IP_ADDR"
 
 	wait_ssh
 }
 
+# Prepare the instance by installing packages and the custom kernels.
 prepare() {
-	echo "preparing instance for bulding..."
+	# Execute ./prepare.sh on the instance.
+	echo "preparing instance for building..."
 	cat "$SPATH/prepare.sh" | $SSH "export GIT_CHECKOUT=$GIT_CHECKOUT; bash"
 	echo "instance prepared"
 
@@ -179,21 +215,27 @@ prepare() {
 		echo "changes uploaded"
 	fi
 
+	# Execute the cloned ../install.sh on the server.
 	echo "building and installing..."
 	$SSH fastcall-spma/install.sh
 	echo "instance ready for benchmarking"
 }
 
+# Execute all benchmarks and restart the server with different configurations
+# until all measurements are taken.
 benchmark() {
 	while :; do
+		# Execute the cloned ./benchmark.sh.
 		RET=0
 		$SSH "cd fastcall-spma; ./aws/benchmark.sh" || RET=$?
 		if [[ "$RET" -eq 0 ]]; then
+			# Return when all benchmarks are finished.
 			return
 		elif [[ "$RET" -ne 1 ]]; then
 			exit "$RET"
 		fi
 
+		# Reboot instance to start with new kernel configuration.
 		echo "rebooting instance..."
 		$AWS reboot-instances --instance-ids "$INSTANCE_ID"
 		# Wait for instance to start rebooting
@@ -204,6 +246,7 @@ benchmark() {
 	done
 }
 
+# Calculate changes remotely and apply them locally.
 retrieve_data() {
 	echo "retrieving benchmark results"
 	cd "$SPATH/.."
@@ -214,9 +257,12 @@ retrieve_data() {
 
 check_dependencies
 
+# Execute cleanup code on error.
 trap finish EXIT
 
+# Create a temporary directory.
 TMP_DIR="$(mktemp --directory --suffix .fastcall)"
+# SSH private key location.
 IDENTITY="$TMP_DIR/id"
 
 create_instance
