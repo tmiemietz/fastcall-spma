@@ -31,18 +31,33 @@ install_kernel() {
     if [ -e /proc/config.gz ]; then
       echo "Using /proc/config.gz as .config"
       zcat /proc/config.gz > .config
-      make olddefconfig
-    elif OUTPUT="$(ls /boot/config-*-cloud-amd64 2>/dev/null)"; then
+    elif OUTPUT="$(ls /boot/config-*-cloud-* 2>/dev/null)"; then
       # This finds the latest kernel config at least on AWS.
       OUTPUT="$(echo "$OUTPUT" | sort | tail --lines=1)"
       echo "Using $OUTPUT as .config"
       cp "$OUTPUT" .config
-      # CONFIG_DEBUG_INFO_BTF must not be set on low-memory AWS instances.
-      sed -i 's/CONFIG_DEBUG_INFO_BTF=y/# CONFIG_DEBUG_INFO_BTF is not set/g' .config
-      make olddefconfig
     else
+      echo "Using defconfig"
       make defconfig
     fi
+    # CONFIG_DEBUG_INFO_BTF must not be set on low-memory AWS instances.
+    sed -i 's/CONFIG_DEBUG_INFO_BTF=y/# CONFIG_DEBUG_INFO_BTF is not set/g' \
+      .config
+    if [[ "$1" == syscall-bench ]]; then
+      # CONFIG_ARM64_PAN must not be set on ARM.
+      sed -i 's/CONFIG_ARM64_PAN=y/# CONFIG_ARM64_PAN is not set/g' .config
+    fi
+    if [[ "$1" == fastcall ]]; then
+      # CONFIG_UNMAP_KERNEL_AT_EL0 must not be set on ARM.
+      sed -i \
+        's/CONFIG_UNMAP_KERNEL_AT_EL0=y/# CONFIG_UNMAP_KERNEL_AT_EL0 is not set/g' \
+        .config
+      # CONFIG_ARM64_SW_TTBR0_PAN must not be set on ARM.
+      sed -i \
+        's/CONFIG_ARM64_SW_TTBR0_PAN=y/# CONFIG_ARM64_SW_TTBR0_PAN is not set/g' \
+        .config
+    fi
+    make olddefconfig
     make localmodconfig
   fi
   make -j `nproc`
