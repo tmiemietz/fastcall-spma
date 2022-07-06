@@ -302,13 +302,27 @@ do_run_micro () {
         csv=`${SPATH}/fastcall-benchmarks/build/benchmark/fastcall-benchmark \
             --benchmark_filter=${bench} --benchmark_format=csv \
             2>${SPATH}/results/${CPUID}/${miti}/${bench}.out`
+        ret="$?"
+
+        if [[ "$ISA" == aarch64 ]]; then
+          # *_nt benchmarks are allowed to fail under ARM
+          csv_error="$(
+            echo "$csv" |
+            grep -v 'vdso_copy_nt' |
+            grep -v 'fastcall_examples_nt' |
+            grep -v 'syscall_nt' |
+            grep -v 'ioctl_nt'
+          )"
+        else
+          csv_error="$csv"
+        fi
 
         # if benchmarks fail, the exit code is still 0 but the "error_occurred"
         # column contains a true
-        if [ $? -ne 0 ] || [[ "$csv" == *",,,,,,,,true,"* ]]
+        if [ "$ret" -ne 0 ] || [[ "$csv_error" == *",,,,,,,,true,"* ]]
           then
           # stderr might not contain the error, so append stdout to the log
-          echo "$csv" >> ${SPATH}/results/${CPUID}/${miti}/${bench}.out
+          echo "$csv_error" >> ${SPATH}/results/${CPUID}/${miti}/${bench}.out
           echo "Benchmark $bench failed. See output below: "
           echo
           cat ${SPATH}/results/${CPUID}/${miti}/${bench}.out
