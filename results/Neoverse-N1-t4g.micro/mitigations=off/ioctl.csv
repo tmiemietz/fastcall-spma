@@ -1,0 +1,12 @@
+name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message
+"IOCTLFixture/ioctl_noop",4270316,162.292,162.292,ns,,,,,
+"IOCTLFixture/ioctl_array/0",3596994,194.728,194.727,ns,0,,,,
+"IOCTLFixture/ioctl_array/8",3227618,215.602,215.599,ns,3.71059e+07,,,,
+"IOCTLFixture/ioctl_array/16",3235576,215.595,215.594,ns,7.42137e+07,,,,
+"IOCTLFixture/ioctl_array/24",3242879,216.34,216.339,ns,1.10937e+08,,,,
+"IOCTLFixture/ioctl_array/32",3218262,215.922,215.923,ns,1.48201e+08,,,,
+"IOCTLFixture/ioctl_array/40",3236035,217.23,217.231,ns,1.84135e+08,,,,
+"IOCTLFixture/ioctl_array/48",3254976,215.959,215.959,ns,2.22264e+08,,,,
+"IOCTLFixture/ioctl_array/56",3241158,216.105,216.107,ns,2.59131e+08,,,,
+"IOCTLFixture/ioctl_array/64",3258923,215.402,215.405,ns,2.97115e+08,,,,
+"IOCTLFixture/ioctl_nt",,,,,,,,true,"ioctl failed!"
