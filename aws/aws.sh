@@ -19,12 +19,15 @@ NONCE="${NONCE:-$(
 	set +o pipefail
 	tr --delete --complement A-Za-z0-9 </dev/urandom | head --bytes 8
 )}"
-# The disk image to use. The script is designed for Debian Bullseye.
+# Instance types for EC2 to spin up; space-separated.
+# Please select instance types which support hardware performance counters.
+read -a INSTANCE_TYPES <<<"${INSTANCE_TYPES:-t3.micro t4g.micro}"
+# The disk image to use for each architecture.
+# The script is designed for Debian Bullseye.
 # Please make sure that the AMI is available in the specified region.
-AMI_ID="${AMI_ID:-ami-0a5b5c0ea66ec560d}"
-# Instance type for EC2.
-# Please select an instance type which supports hardware performance counters.
-INSTANCE_TYPE="${INSTANCE_TYPE:-t3.micro}"
+AMI_ID_X86="${AMI_ID_X86:-ami-0a5b5c0ea66ec560d}"
+AMI_ID_ARM="${AMI_ID_ARM:-ami-07751393ac2b1c0ed}"
+read -a INSTANCE_TYPES <<<"${INSTANCE_TYPES:-t3.micro t4g.micro}"
 # Available storage space.
 VOLUME_SIZE="${VOLUME_SIZE:-20}"
 # Allow incoming SSH traffic from following IP range to the created instance(s).
@@ -101,15 +104,8 @@ check_dependencies() {
 	fi
 }
 
-# Cleanup routine to delete created AWS resources.
-finish() {
-	set +e
-
-	# Give the user a chance to manually connect to the instance(s) before
-	# cleanup.
-	read -p "Press Enter to tear instance down"
-
-	# Terminate instance.
+# Terminate current instance.
+terminate() {
 	if [[ -n "${INSTANCE_ID-}" ]]; then
 		$AWS terminate-instances \
 			--instance-ids "$INSTANCE_ID" \
@@ -118,13 +114,33 @@ finish() {
 		$AWS wait instance-terminated \
 			--instance-ids "$INSTANCE_ID" \
 			&>/dev/null
+
+		INSTANCE_ID=
 	fi
+}
+
+# Cleanup routine to delete created AWS resources.
+finish() {
+	EXIT="$?"
+	set +e
+
+	if [[ "$EXIT" -ne 0 ]]; then
+		# Give the user a chance to manually connect to the instance before
+		# cleanup.
+		if [[ -n "${SSH-}" ]]; then
+			echo "You can connect to the failed instance via:"
+			echo "  $SSH"
+		fi
+		read -p "Press Enter to tear AWS environment down"
+	fi
+
+	terminate
 
 	# Delete key pair.
 	$AWS delete-key-pair --key-name "$KEY_NAME" &>/dev/null
 
 	# Delete security group.
-	if [[ -n ${SECURITY_ID-} ]]; then
+	if [[ -n "${SECURITY_ID-}" ]]; then
 		$AWS delete-security-group \
 			--group-id "$SECURITY_ID"
 	fi
@@ -142,8 +158,8 @@ wait_ssh() {
 	echo "SSH working"
 }
 
-# Create a new AWS instance.
-create_instance() {
+# Setup AWS environment.
+setup_aws() {
 	echo "creating security group ..."
 	OUTPUT="$(
 		$AWS create-security-group \
@@ -164,12 +180,32 @@ create_instance() {
 		--key-name "$KEY_NAME" |
 		$JQ '.KeyMaterial' >"$IDENTITY"
 	echo "private SSH key of $KEY_NAME written to $IDENTITY"
+}
 
-	echo "creating instance..."
+# Create a new AWS instance.
+create_instance() {
+	echo "querying architecture for $1..."
+	OUTPUT="$(
+		$AWS describe-instance-types --instance-types "$1"
+	)"
+	ARCH="$(
+		$JQ .InstanceTypes[0].ProcessorInfo.SupportedArchitectures[0] <<<"$OUTPUT"
+	)"
+	if [[ "$ARCH" == x86_64 ]]; then
+		AMI_ID="$AMI_ID_X86"
+	elif [[ "$ARCH" == arm64 ]]; then
+		AMI_ID="$AMI_ID_ARM"
+	else
+		echo "architecture $ARCH unsupported"
+		exit 1
+	fi
+	echo "architecture is $ARCH"
+
+	echo "creating instance $1..."
 	OUTPUT="$(
 		$AWS run-instances \
 			--image-id "$AMI_ID" \
-			--instance-type "$INSTANCE_TYPE" \
+			--instance-type "$1" \
 			--key-name "$KEY_NAME" \
 			--security-group-ids "$SECURITY_ID" \
 			--associate-public-ip-address \
@@ -204,11 +240,11 @@ prepare() {
 	if [[ -n "$UPLOAD_CHANGES" ]]; then
 		echo "uploading local changes..."
 		cd "$SPATH/.."
-		OUTPUT="$(
+		GIT_DIFF=${GIT_DIFF-"$(
 			git diff "$GIT_CHECKOUT" --
-		)"
-		if [[ -n "$OUTPUT" ]]; then
-			echo "$OUTPUT" | $SSH "cd fastcall-spma; git apply"
+		)"}
+		if [[ -n "$GIT_DIFF" ]]; then
+			echo "$GIT_DIFF" | $SSH "cd fastcall-spma; git apply"
 			$SSH "cd fastcall-spma; git add --all; git commit --message 'local changes'"
 		fi
 		cd - >/dev/null
@@ -265,7 +301,12 @@ TMP_DIR="$(mktemp --directory --suffix .fastcall)"
 # SSH private key location.
 IDENTITY="$TMP_DIR/id"
 
-create_instance
-prepare
-benchmark
-retrieve_data
+# Iterate through all instance types and perform benchmarks for every type.
+setup_aws
+for type in "${INSTANCE_TYPES[@]}"; do
+	create_instance "$type"
+	prepare
+	benchmark
+	retrieve_data
+	terminate
+done
