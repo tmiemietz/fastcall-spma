@@ -184,7 +184,7 @@ check_kernel () {
   fi
 
   # check if proper mitigations have been set
-  for opt in "$opts"
+  for opt in $opts
     do
     if [[ ! $cmdline == *"$opt"* ]]
       then
