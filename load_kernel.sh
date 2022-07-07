@@ -220,6 +220,52 @@ set_kernel () {
             print("\"");
             next;
           }
+     
+     # remove deleted options from _DEFAULT string to avoid duplicate options.
+     /^GRUB_CMDLINE_LINUX_DEFAULT=.*$/ {
+            # options that are currently active in the system
+            gsub("GRUB_CMDLINE_LINUX_DEFAULT=", "");
+            gsub("\"", "");
+
+            cur_opt_cnt = split($0, cur_opt_arr, " ");
+            del_opt_cnt = split(delopt, del_opt_arr, ",");
+
+            # transform del_opt_arr into a list of del_opt tags for easier 
+            # search for existence of array members
+            for (idx in del_opt_arr) {
+                del_opt_tags[del_opt_arr[idx]] = "";
+            }
+
+            # print bracketing variable name
+            printf("GRUB_CMDLINE_LINUX_DEFAULT=\"");
+            
+            for (j = 1; j <= cur_opt_cnt; j++) {
+                cur_tag = "";
+
+                idx = index(cur_opt_arr[j], "=");
+                if (idx == 0) {
+                    cur_tag = cur_opt_arr[j];
+                }
+                else {
+                    cur_tag = substr(cur_opt_arr[j], 0, idx - 1);
+                }
+                
+                # skip options that should be deleted and are not in the
+                # list of new / modified options
+                if (cur_tag in del_opt_tags) {
+                    continue;
+                    }
+                else {
+                    printf(cur_opt_arr[j]);
+                }
+
+                printf(" ");
+            }
+
+            # close option string (with newline at the end)
+            print("\"");
+            next;
+        }
 
      # default, output line without modifications
      { print($0); }
