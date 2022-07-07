@@ -260,6 +260,8 @@ prepare() {
 # Execute all benchmarks and restart the server with different configurations
 # until all measurements are taken.
 benchmark() {
+	$SSH "cd fastcall-spma; ./aws/delete_results.sh"
+
 	while :; do
 		# Execute the cloned ./benchmark.sh.
 		RET=0
