@@ -277,7 +277,7 @@ benchmark() {
 		echo "rebooting instance..."
 		$AWS reboot-instances --instance-ids "$INSTANCE_ID"
 		# Wait for instance to start rebooting
-		sleep 5
+		sleep 60
 		$AWS wait instance-running --instance-ids "$INSTANCE_ID"
 		echo "instance came back up"
 		wait_ssh
