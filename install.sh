@@ -59,6 +59,8 @@ install_kernel() {
     fi
     make olddefconfig
     make localmodconfig
+    # CONFIG_X86_MSR should be set for CPU power management.
+    sed -i 's/# CONFIG_X86_MSR is not set/CONFIG_X86_MSR=m/g' .config
   fi
   make -j `nproc`
 

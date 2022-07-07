@@ -9,7 +9,7 @@ install_packages() {
 	sudo apt-get update
 	sudo apt-get install --yes \
 		git make gcc flex bison libelf-dev libssl-dev bc python3 kmod lz4 cmake \
-		g++ libboost-dev libboost-program-options1.74-dev
+		g++ libboost-dev libboost-program-options1.74-dev linux-cpupower
 }
 
 # Clone this repository at the specified commit/branch.
