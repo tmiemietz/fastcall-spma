@@ -10,6 +10,7 @@ PLOT_EXT = environ.get("PLOT_EXT", ".png")
 
 PLOTTED_CPUS = ("AMD_Ryzen_7_3700X_8-Core_Processor",
                 "Intel(R)_Xeon(R)_Platinum_8375C_CPU_@_2.90GHz",
+                "Intel(R)_Xeon(R)_Platinum_8252C_CPU_@_3.80GHz",
                 "Intel(R)_Core(TM)_i7-4790_CPU_@_3.60GHz")
 
 MITIGATIONS = {"mitigations=auto": "Default Mitigations",
