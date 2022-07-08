@@ -46,6 +46,9 @@ install_kernel() {
     if [[ "$1" == syscall-bench ]]; then
       # CONFIG_ARM64_PAN must not be set on ARM.
       sed -i 's/CONFIG_ARM64_PAN=y/# CONFIG_ARM64_PAN is not set/g' .config
+      # CONFIG_XEN_PV must not be set on x86.
+      sed -i 's/CONFIG_XEN_PV=y/# CONFIG_XEN_PV is not set/g' \
+        .config
     fi
     if [[ "$1" == fastcall ]]; then
       # CONFIG_UNMAP_KERNEL_AT_EL0 must not be set on ARM.
