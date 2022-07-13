@@ -13,14 +13,15 @@ ARCHS <- list(
 
 evaluate <- function(path) {
   df <- read_csv(path, col_types = "d")
-  df_means <- df %>% colMeans()
-  df_norm <- df_means
+  df_norm <- df
 
-  for (i in 2:length(df_means)) {
-    df_norm[i] <- df_means[i] - df_means[i - 1] - df_means["overhead"]
+  for (c in 2:ncol(df)) {
+    df_norm[, c] <-
+      df[, c] - df[, c - 1] - df[, "overhead"]
   }
 
-  return(df_norm)
+  df_median <- apply(df_norm, 2, median)
+  return(df_median)
 }
 
 plot_arch <- function(arch, cpus) {
