@@ -20,8 +20,8 @@ evaluate <- function(path) {
       df[, c] - df[, c - 1] - df[, "overhead"]
   }
 
-  df_median <- apply(df_norm, 2, median)
-  return(df_median)
+  df_summary <- apply(df_norm, 2, quantile, c(0.1, 0.5, 0.9))
+  return(df_summary)
 }
 
 plot_arch <- function(arch, cpus) {
@@ -33,11 +33,11 @@ plot_arch <- function(arch, cpus) {
     )) {
       path <- dirname(csv)
       miti <- basename(path)
-      evaluation <- evaluate(file.path(cpu_dir, csv))
+      evaluation <- evaluate(file.path(cpu_dir, csv)) %>% data.frame()
       tmp <- data.frame(
-        cpu = cpu, miti = miti, step = names(evaluation),
-        cycles = evaluation, row.names = NULL
-      )
+        cpu = cpu, miti = miti, step = names(evaluation), t(evaluation),
+        row.names = NULL
+      ) %>% rename(lower_q = "X10.", cycles = "X50.", upper_q = "X90.")
       tmp$miti <- factor(tmp$miti,
         levels = c("mitigations=off", "nopti%mds=off", "mitigations=auto")
       )
@@ -52,7 +52,8 @@ plot_arch <- function(arch, cpus) {
   plot <- ggplot(df, aes(step, cycles, fill = miti)) +
     geom_bar(stat = "identity", show.legend = FALSE) +
     facet_grid(cpu ~ miti) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+    geom_errorbar(aes(ymin = lower_q, ymax = upper_q), width = .7)
   ggsave(paste0("bar_per_miti", EXT), plot, path = plots)
 
   plot <- ggplot(df, aes(miti, cycles, fill = miti)) +
@@ -61,7 +62,8 @@ plot_arch <- function(arch, cpus) {
     theme(
       axis.title.x = element_blank(), axis.text.x = element_blank(),
       axis.ticks.x = element_blank()
-    )
+    ) +
+    geom_errorbar(aes(ymin = lower_q, ymax = upper_q), width = .7)
   ggsave(paste0("bar_per_step", EXT), plot, path = plots)
 
   plot <- ggplot(df, aes(miti, cycles, fill = step)) +
