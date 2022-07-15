@@ -16,13 +16,11 @@ CPUS <- c(
 )
 
 evaluate <- function(path) {
-  df <- read_csv(path, col_types = "d")
-
-  # subtract the benchmark overhead
-  norm <- df$fastcall - median(df$noop)
-  # filter out the upper 1%, this is most likely noise
-  norm <- Filter(function(c) c <= quantile(norm, 0.99), norm)
-  return(norm)
+  read_csv(path, col_types = "d") %>%
+    # subtract the benchmark overhead
+    mutate(cycles = fastcall - median(noop), id = row_number()) %>%
+    select(-fastcall, -noop) %>%
+    filter(cycles <= quantile(cycles, 0.99))
 }
 
 for (cpu in CPUS) {
@@ -34,7 +32,7 @@ for (cpu in CPUS) {
     dir <- dirname(csv)
     miti <- basename(dir)
     path <- file.path(cpu_dir, csv)
-    tmp <- data.frame(miti = miti, cycles = evaluate(path))
+    tmp <- data.frame(miti = miti, evaluate(path))
     # fix the order of the mitigations
     tmp$miti <- factor(tmp$miti,
       levels = c("mitigations=off", "nopti%mds=off", "mitigations=auto")
@@ -42,13 +40,11 @@ for (cpu in CPUS) {
     df <- rbind(df, tmp)
   }
 
-  plot <- ggplot(df, aes(x = 1, y = cycles)) +
+  plot <- ggplot(df, aes(x = id, y = cycles)) +
     facet_grid(. ~ miti) +
     # use a jitter plot to disperse the data points for better visibility
-    geom_jitter(size = 0.1, height = 1) +
-    # alternatively, violin plots could be used
-    # geom_violin() +
-    scale_x_continuous(name = "Artificial Jitter") +
+    geom_point(size = 0.1) +
+    scale_x_continuous(name = "Iteration Number") +
     scale_y_continuous(name = "Cycles (<=99% Quantile)") +
     expand_limits(y = 0) +
     ggtitle(paste("Fastcall Latency of", cpu))
